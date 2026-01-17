@@ -75,19 +75,140 @@ jobs:
 
           echo "✓ Core directory structure validated"
 
-  # TODO: Add functional tests once DuckDB operations are implemented
-  # test-duckdb:
-  #   name: Test DuckDB Operations
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.11'
-  #     - name: Install dbt-duckdb
-  #       run: pip install dbt-duckdb
-  #     - name: Run operations
-  #       run: |
-  #         dbt deps
-  #         dbt run-operation demo_load_baseline --target dev
-  #         dbt run-operation demo_status --target dev
+  test-duckdb:
+    name: Test DuckDB Operations
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dbt-duckdb
+        run: |
+          python -m pip install --upgrade pip
+          pip install dbt-core dbt-duckdb
+
+      - name: Create profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          demo_source:
+            target: dev
+            outputs:
+              dev:
+                type: duckdb
+                path: 'demo_source.duckdb'
+          EOF
+
+      - name: Verify dbt installation
+        run: |
+          dbt --version
+
+      - name: Test demo_load_baseline
+        run: |
+          echo "=== Testing demo_load_baseline ==="
+          dbt run-operation demo_load_baseline --profile demo_source
+
+      - name: Verify baseline data
+        run: |
+          echo "=== Verifying baseline data ==="
+          dbt run-operation demo_verify_baseline --profile demo_source 2>&1 | tee /tmp/verify_baseline.log
+
+      - name: Test demo_status
+        run: |
+          echo "=== Testing demo_status ==="
+          dbt run-operation demo_status --profile demo_source
+
+      # TODO: Re-enable delta tests after Issue #40 is resolved
+      # Currently blocked: baseline has 5 customers, deltas reference IDs 6-125
+      # - name: Test demo_apply_delta (day 1)
+      #   run: |
+      #     echo "=== Testing demo_apply_delta day 1 ==="
+      #     dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source
+      #
+      # - name: Test demo_apply_delta (day 2)
+      #   run: |
+      #     echo "=== Testing demo_apply_delta day 2 ==="
+      #     dbt run-operation demo_apply_delta --args '{day: 2}' --profile demo_source
+      #
+      # - name: Test demo_apply_delta (day 3)
+      #   run: |
+      #     echo "=== Testing demo_apply_delta day 3 ==="
+      #     dbt run-operation demo_apply_delta --args '{day: 3}' --profile demo_source
+
+      - name: Test demo_reset
+        run: |
+          echo "=== Testing demo_reset ==="
+          dbt run-operation demo_reset --profile demo_source
+
+      - name: Verify reset restored baseline
+        run: |
+          echo "=== Verifying reset restored baseline ==="
+          dbt run-operation demo_verify_baseline --profile demo_source 2>&1 | tee /tmp/verify_reset.log
+
+      - name: Final status check
+        run: |
+          echo "=== Final status check ==="
+          dbt run-operation demo_status --profile demo_source
+
+      - name: Post test results to PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Convert verification output to markdown tables
+          convert_to_markdown() {
+            local input="$1"
+            local output="$2"
+
+            # Create markdown table header
+            echo "| Database.Table | Expected | Actual | Status |" > "$output"
+            echo "|----------------|----------|--------|--------|" >> "$output"
+
+            # Extract and convert table rows
+            grep "║.*│.*│.*│.*║" "$input" | \
+              grep -v "Database.Table" | \
+              grep -v "═" | \
+              grep -v "─" | \
+              sed 's/\x1b\[[0-9;]*m//g' | \
+              sed 's/^[0-9:]\{8\}  //g' | \
+              sed 's/║/|/g' | \
+              sed 's/│/|/g' | \
+              sed 's/|[[:space:]]*|/|/g' | \
+              sed 's/|[[:space:]]/| /g' | \
+              sed 's/[[:space:]]|/ |/g' >> "$output"
+          }
+
+          convert_to_markdown /tmp/verify_baseline.log /tmp/baseline_table.md
+          convert_to_markdown /tmp/verify_reset.log /tmp/reset_table.md
+
+          # Create PR comment
+          cat > /tmp/pr_comment.md << 'EOF'
+          ## 🧪 DuckDB Test Results
+
+          ### ✓ Baseline Load Verification
+
+          EOF
+          cat /tmp/baseline_table.md >> /tmp/pr_comment.md
+          cat >> /tmp/pr_comment.md << 'EOF'
+
+          ### ✓ Reset Verification
+
+          EOF
+          cat /tmp/reset_table.md >> /tmp/pr_comment.md
+          cat >> /tmp/pr_comment.md << 'EOF'
+
+          ---
+          *Automated test results from CI workflow*
+          EOF
+
+          # Post comment to PR
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/pr_comment.md
