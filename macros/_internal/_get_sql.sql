@@ -36,12 +36,24 @@
   {% if target.type == 'duckdb' %}
     {% if path == 'baseline/shop_schema' %}
       {{ return(demo_source_ops._get_duckdb_baseline_shop_schema()) }}
-    {% elif path == 'baseline/shop_seed' %}
-      {{ return(demo_source_ops._get_duckdb_baseline_shop_seed()) }}
+    {# Baseline shop - table-specific #}
+    {% elif path == 'baseline/shop_customers' %}
+      {{ return(demo_source_ops._get_duckdb_baseline_shop_customers()) }}
+    {% elif path == 'baseline/shop_products' %}
+      {{ return(demo_source_ops._get_duckdb_baseline_shop_products()) }}
+    {% elif path == 'baseline/shop_orders' %}
+      {{ return(demo_source_ops._get_duckdb_baseline_shop_orders()) }}
+    {% elif path == 'baseline/shop_order_items' %}
+      {{ return(demo_source_ops._get_duckdb_baseline_shop_order_items()) }}
     {% elif path == 'baseline/crm_schema' %}
       {{ return(demo_source_ops._get_duckdb_baseline_crm_schema()) }}
-    {% elif path == 'baseline/crm_seed' %}
-      {{ return(demo_source_ops._get_duckdb_baseline_crm_seed()) }}
+    {# Baseline CRM - table-specific #}
+    {% elif path == 'baseline/crm_campaigns' %}
+      {{ return(demo_source_ops._get_duckdb_baseline_crm_campaigns()) }}
+    {% elif path == 'baseline/crm_email_activity' %}
+      {{ return(demo_source_ops._get_duckdb_baseline_crm_email_activity()) }}
+    {% elif path == 'baseline/crm_web_sessions' %}
+      {{ return(demo_source_ops._get_duckdb_baseline_crm_web_sessions()) }}
     {% elif path == 'utilities/truncate_shop' %}
       {{ return(demo_source_ops._get_duckdb_utilities_truncate_shop()) }}
     {% elif path == 'utilities/truncate_crm' %}

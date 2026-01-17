@@ -74,13 +74,8 @@ CREATE TABLE IF NOT EXISTS jaffle_shop.payments (
 );
 {% endmacro %}
 
-{% macro _get_duckdb_baseline_shop_seed() %}
--- ============================================================================
--- jaffle_shop baseline seed data (scaled to 100 customers)
--- Auto-generated for realistic demo data
--- ============================================================================
 
--- Seed customers (100 customers spread over 100 days)
+{% macro _get_duckdb_baseline_shop_customers() %}
 INSERT INTO jaffle_shop.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
 (1, 'Brian', 'Alvarez', 'brian.alvarez1@example.com', CURRENT_TIMESTAMP - INTERVAL '99 days', CURRENT_TIMESTAMP - INTERVAL '99 days', NULL),
 (2, 'Kevin', 'Baker', 'kevin.baker2@example.com', CURRENT_TIMESTAMP - INTERVAL '98 days', CURRENT_TIMESTAMP - INTERVAL '98 days', NULL),
@@ -182,8 +177,9 @@ INSERT INTO jaffle_shop.customers (customer_id, first_name, last_name, email, cr
 (98, 'Patricia', 'Carter', 'patricia.carter98@example.com', CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', NULL),
 (99, 'Janet', 'Ortiz', 'janet.ortiz99@example.com', CURRENT_TIMESTAMP - INTERVAL '1 days', CURRENT_TIMESTAMP - INTERVAL '1 days', NULL),
 (100, 'Donald', 'Reed', 'donald.reed100@example.com', CURRENT_TIMESTAMP - INTERVAL '0 days', CURRENT_TIMESTAMP - INTERVAL '0 days', NULL);
+{% endmacro %}
 
--- Seed products (20 products - established catalog)
+{% macro _get_duckdb_baseline_shop_products() %}
 INSERT INTO jaffle_shop.products (product_id, name, category, price, created_at, updated_at, deleted_at) VALUES
 (1, 'Laptop Pro', 'Electronics', 1299.99, CURRENT_TIMESTAMP - INTERVAL '70 days', CURRENT_TIMESTAMP - INTERVAL '70 days', NULL),
 (2, 'Wireless Mouse', 'Electronics', 29.99, CURRENT_TIMESTAMP - INTERVAL '73 days', CURRENT_TIMESTAMP - INTERVAL '73 days', NULL),
@@ -205,8 +201,9 @@ INSERT INTO jaffle_shop.products (product_id, name, category, price, created_at,
 (18, 'Desk Mat', 'Accessories', 29.99, CURRENT_TIMESTAMP - INTERVAL '108 days', CURRENT_TIMESTAMP - INTERVAL '108 days', NULL),
 (19, 'Plant Pot', 'Decor', 19.99, CURRENT_TIMESTAMP - INTERVAL '53 days', CURRENT_TIMESTAMP - INTERVAL '53 days', NULL),
 (20, 'Wall Art', 'Decor', 89.99, CURRENT_TIMESTAMP - INTERVAL '54 days', CURRENT_TIMESTAMP - INTERVAL '54 days', NULL);
+{% endmacro %}
 
--- Seed orders (500 orders - recent activity)
+{% macro _get_duckdb_baseline_shop_orders() %}
 INSERT INTO jaffle_shop.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
 (1, 82, CURRENT_DATE - 15, 'pending', CURRENT_TIMESTAMP - INTERVAL '15 days', CURRENT_TIMESTAMP - INTERVAL '15 days', NULL),
 (2, 36, CURRENT_DATE - 32, 'completed', CURRENT_TIMESTAMP - INTERVAL '32 days', CURRENT_TIMESTAMP - INTERVAL '29 days', NULL),
@@ -708,8 +705,9 @@ INSERT INTO jaffle_shop.orders (order_id, customer_id, order_date, status, creat
 (498, 45, CURRENT_DATE - 31, 'completed', CURRENT_TIMESTAMP - INTERVAL '31 days', CURRENT_TIMESTAMP - INTERVAL '28 days', NULL),
 (499, 14, CURRENT_DATE - 75, 'completed', CURRENT_TIMESTAMP - INTERVAL '75 days', CURRENT_TIMESTAMP - INTERVAL '73 days', NULL),
 (500, 18, CURRENT_DATE - 6, 'completed', CURRENT_TIMESTAMP - INTERVAL '6 days', CURRENT_TIMESTAMP - INTERVAL '4 days', NULL);
+{% endmacro %}
 
--- Seed order items (1200 items - avg 2.4 items per order)
+{% macro _get_duckdb_baseline_shop_order_items() %}
 INSERT INTO jaffle_shop.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
 (1, 1, 2, 1, 29.99, CURRENT_TIMESTAMP - INTERVAL '56 days', CURRENT_TIMESTAMP - INTERVAL '56 days', NULL),
 (2, 1, 12, 2, 79.99, CURRENT_TIMESTAMP - INTERVAL '41 days', CURRENT_TIMESTAMP - INTERVAL '41 days', NULL),
@@ -1913,6 +1911,7 @@ INSERT INTO jaffle_shop.order_items (order_item_id, order_id, product_id, quanti
 (1200, 500, 4, 1, 399.99, CURRENT_TIMESTAMP - INTERVAL '35 days', CURRENT_TIMESTAMP - INTERVAL '35 days', NULL);
 {% endmacro %}
 
+
 {% macro _get_duckdb_baseline_crm_schema() %}
 -- Create schema first
 CREATE SCHEMA IF NOT EXISTS jaffle_crm;
@@ -1959,20 +1958,17 @@ CREATE TABLE IF NOT EXISTS jaffle_crm.web_sessions (
 );
 {% endmacro %}
 
-{% macro _get_duckdb_baseline_crm_seed() %}
--- ============================================================================
--- jaffle_crm baseline seed data
--- ============================================================================
 
--- Seed campaigns (5 active campaigns)
+{% macro _get_duckdb_baseline_crm_campaigns() %}
 INSERT INTO jaffle_crm.campaigns (campaign_id, campaign_name, start_date, end_date, budget, created_at, updated_at, deleted_at) VALUES
 (1, 'Spring Sale 2024', CURRENT_DATE - 30, CURRENT_DATE - 0, 5000.0, CURRENT_TIMESTAMP - INTERVAL '30 days', CURRENT_TIMESTAMP - INTERVAL '30 days', NULL),
 (2, 'Summer Clearance', CURRENT_DATE - 25, CURRENT_DATE - -5, 7500.0, CURRENT_TIMESTAMP - INTERVAL '25 days', CURRENT_TIMESTAMP - INTERVAL '25 days', NULL),
 (3, 'Back to School', CURRENT_DATE - 20, CURRENT_DATE - -5, 3000.0, CURRENT_TIMESTAMP - INTERVAL '20 days', CURRENT_TIMESTAMP - INTERVAL '20 days', NULL),
 (4, 'Fall Promotion', CURRENT_DATE - 15, CURRENT_DATE - -5, 6000.0, CURRENT_TIMESTAMP - INTERVAL '15 days', CURRENT_TIMESTAMP - INTERVAL '15 days', NULL),
 (5, 'Holiday Special', CURRENT_DATE - 10, CURRENT_DATE - -5, 10000.0, CURRENT_TIMESTAMP - INTERVAL '10 days', CURRENT_TIMESTAMP - INTERVAL '10 days', NULL);
+{% endmacro %}
 
--- Seed email activity (100 email interactions)
+{% macro _get_duckdb_baseline_crm_email_activity() %}
 INSERT INTO jaffle_crm.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
 (1, 1, 1, CURRENT_TIMESTAMP - INTERVAL '1 days', FALSE, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 days', CURRENT_TIMESTAMP - INTERVAL '1 days', NULL),
 (2, 2, 2, CURRENT_TIMESTAMP - INTERVAL '8 days', TRUE, TRUE, CURRENT_TIMESTAMP - INTERVAL '8 days', CURRENT_TIMESTAMP - INTERVAL '8 days', NULL),
@@ -2074,8 +2070,9 @@ INSERT INTO jaffle_crm.email_activity (activity_id, customer_id, campaign_id, se
 (98, 98, 1, CURRENT_TIMESTAMP - INTERVAL '29 days', FALSE, FALSE, CURRENT_TIMESTAMP - INTERVAL '29 days', CURRENT_TIMESTAMP - INTERVAL '29 days', NULL),
 (99, 99, 2, CURRENT_TIMESTAMP - INTERVAL '18 days', TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '18 days', CURRENT_TIMESTAMP - INTERVAL '18 days', NULL),
 (100, 100, 5, CURRENT_TIMESTAMP - INTERVAL '5 days', TRUE, TRUE, CURRENT_TIMESTAMP - INTERVAL '5 days', CURRENT_TIMESTAMP - INTERVAL '5 days', NULL);
+{% endmacro %}
 
--- Seed web sessions (150 sessions)
+{% macro _get_duckdb_baseline_crm_web_sessions() %}
 INSERT INTO jaffle_crm.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
 (1, 82, CURRENT_TIMESTAMP - INTERVAL '8 days', CURRENT_TIMESTAMP - INTERVAL '8 days' + INTERVAL '2 minutes', 9, CURRENT_TIMESTAMP - INTERVAL '8 days', CURRENT_TIMESTAMP - INTERVAL '8 days', NULL),
 (2, 32, CURRENT_TIMESTAMP - INTERVAL '15 days', CURRENT_TIMESTAMP - INTERVAL '15 days' + INTERVAL '9 minutes', 4, CURRENT_TIMESTAMP - INTERVAL '15 days', CURRENT_TIMESTAMP - INTERVAL '15 days', NULL),
@@ -2228,6 +2225,7 @@ INSERT INTO jaffle_crm.web_sessions (session_id, customer_id, session_start, ses
 (149, 57, CURRENT_TIMESTAMP - INTERVAL '44 days', CURRENT_TIMESTAMP - INTERVAL '44 days' + INTERVAL '14 minutes', 17, CURRENT_TIMESTAMP - INTERVAL '44 days', CURRENT_TIMESTAMP - INTERVAL '44 days', NULL),
 (150, 61, CURRENT_TIMESTAMP - INTERVAL '51 days', CURRENT_TIMESTAMP - INTERVAL '51 days' + INTERVAL '11 minutes', 3, CURRENT_TIMESTAMP - INTERVAL '51 days', CURRENT_TIMESTAMP - INTERVAL '51 days', NULL);
 {% endmacro %}
+
 
 {% macro _get_duckdb_utilities_truncate_shop() %}
 -- Truncate all jaffle_shop tables
