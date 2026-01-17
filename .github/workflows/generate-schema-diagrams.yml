@@ -50,7 +50,7 @@ jobs:
 
       - name: Clone wiki repository
         run: |
-          git clone https://github.com/${{ github.repository }}.wiki.git wiki-repo
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki-repo
 
       - name: Copy ERD images to wiki
         run: |
