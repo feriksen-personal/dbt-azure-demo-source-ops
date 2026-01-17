@@ -164,28 +164,49 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Extract and clean the tables from verification logs
-          # Remove ANSI codes and timestamps
-          grep -A 20 "Test Results" /tmp/verify_baseline.log | sed 's/\x1b\[[0-9;]*m//g' | sed 's/^[0-9:]\{8\}  //g' > /tmp/baseline_table.txt || echo "Could not extract baseline verification" > /tmp/baseline_table.txt
-          grep -A 20 "Test Results" /tmp/verify_reset.log | sed 's/\x1b\[[0-9;]*m//g' | sed 's/^[0-9:]\{8\}  //g' > /tmp/reset_table.txt || echo "Could not extract reset verification" > /tmp/reset_table.txt
+          # Convert verification output to markdown tables
+          convert_to_markdown() {
+            local input="$1"
+            local output="$2"
+
+            # Create markdown table header
+            echo "| Database.Table | Expected | Actual | Status |" > "$output"
+            echo "|----------------|----------|--------|--------|" >> "$output"
+
+            # Extract and convert table rows
+            grep "║.*│.*│.*│.*║" "$input" | \
+              grep -v "Database.Table" | \
+              grep -v "═" | \
+              grep -v "─" | \
+              sed 's/\x1b\[[0-9;]*m//g' | \
+              sed 's/^[0-9:]\{8\}  //g' | \
+              sed 's/║//g' | \
+              sed 's/│/|/g' | \
+              sed 's/^[[:space:]]*|/|/g' | \
+              sed 's/|[[:space:]]*$/|/g' | \
+              sed 's/  */ /g' | \
+              sed 's/ |/|/g' | \
+              sed 's/| /|/g' >> "$output"
+          }
+
+          convert_to_markdown /tmp/verify_baseline.log /tmp/baseline_table.md
+          convert_to_markdown /tmp/verify_reset.log /tmp/reset_table.md
 
           # Create PR comment
           cat > /tmp/pr_comment.md << 'EOF'
           ## 🧪 DuckDB Test Results
 
           ### ✓ Baseline Load Verification
-          ```
+
           EOF
-          cat /tmp/baseline_table.txt >> /tmp/pr_comment.md
+          cat /tmp/baseline_table.md >> /tmp/pr_comment.md
           cat >> /tmp/pr_comment.md << 'EOF'
-          ```
 
           ### ✓ Reset Verification
-          ```
+
           EOF
-          cat /tmp/reset_table.txt >> /tmp/pr_comment.md
+          cat /tmp/reset_table.md >> /tmp/pr_comment.md
           cat >> /tmp/pr_comment.md << 'EOF'
-          ```
 
           ---
           *Automated test results from CI workflow*
