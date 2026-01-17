@@ -68,11 +68,11 @@
   {{ demo_source_ops._log("╟────────────────────────────────────────────────────────╢") }}
 
   {% for result in results %}
-    {% set status = "✓ PASS" if result.passed else "✗ FAIL" %}
+    {% set status = "✅" if result.passed else "❌" %}
     {% set table_padded = (result.table ~ "                       ")[:23] %}
     {% set expected_padded = ("%8d" % result.expected) %}
     {% set actual_padded = ("%6d" % result.actual) %}
-    {{ demo_source_ops._log("║ " ~ table_padded ~ " │ " ~ expected_padded ~ " │ " ~ actual_padded ~ " │ " ~ status ~ "   ║") }}
+    {{ demo_source_ops._log("║ " ~ table_padded ~ " │ " ~ expected_padded ~ " │ " ~ actual_padded ~ " │ " ~ status ~ "      ║") }}
   {% endfor %}
 
   {{ demo_source_ops._log("╚════════════════════════════════════════════════════════╝") }}
