@@ -19,16 +19,21 @@
     {# Split on semicolon and execute each statement separately #}
     {% set statements = sql.split(';') %}
     {% for stmt in statements %}
-      {# Remove comments and whitespace #}
-      {% set lines = [] %}
-      {% for line in stmt.split('\n') %}
-        {% if not line.strip().startswith('--') %}
-          {% do lines.append(line) %}
+      {# Skip empty statements #}
+      {% set stmt = stmt.strip() %}
+      {% if stmt %}
+        {# Remove SQL comments (lines starting with --) #}
+        {% set lines = [] %}
+        {% for line in stmt.split('\n') %}
+          {% set line_stripped = line.strip() %}
+          {% if line_stripped and not line_stripped.startswith('--') %}
+            {% do lines.append(line) %}
+          {% endif %}
+        {% endfor %}
+        {% set trimmed = '\n'.join(lines).strip() %}
+        {% if trimmed %}
+          {% do run_query(trimmed) %}
         {% endif %}
-      {% endfor %}
-      {% set trimmed = '\n'.join(lines).strip() %}
-      {% if trimmed %}
-        {% do run_query(trimmed) %}
       {% endif %}
     {% endfor %}
   {% else %}
