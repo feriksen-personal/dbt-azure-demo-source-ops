@@ -46,12 +46,13 @@ Complete documentation for managing demo source data in dbt projects.
 
 ### Traditional Demo Databases
 
-Popular databases like **Northwind Traders**, **AdventureWorks**, and **Pagila** are excellent for:
+Popular databases like **[AdventureWorks](https://learn.microsoft.com/en-us/sql/samples/adventureworks-install-configure)** and **[Willibald](https://dwa-compare.info/en/start-2/)** are excellent for:
 
 - Learning SQL queries and data transformations
 - Building BI dashboards and reports
 - Exploring schema design and normalization
 - Practicing data modeling
+- Testing Data Vault automation tools (Willibald)
 
 **Key characteristic**: Static, complete datasets
 
@@ -69,15 +70,16 @@ Popular databases like **Northwind Traders**, **AdventureWorks**, and **Pagila**
 
 ### Use Case Comparison
 
-| Scenario                                 | Traditional Demo DB   | This Package                                |
-| ---------------------------------------- | --------------------- | ------------------------------------------- |
-| "How do I write a complex JOIN?"         | ✅ Northwind          | ❌ Not the focus                            |
-| "How do I detect changed records?"       | ❌ Static data        | ✅ Apply deltas, observe changes            |
-| "How do I test incremental loads?"       | ❌ No state evolution | ✅ Apply Day 1, then Day 2, then Day 3      |
-| "How does CDC work?"                     | ❌ No change tracking | ✅ Azure SQL with change tracking enabled   |
-| "How do I handle soft deletes?"          | ❌ No deleted records | ✅ `deleted_at` column pattern              |
-| "How do I test pipeline reset/recovery?" | ❌ Can't reset state  | ✅ `demo_reset` operation                   |
-| "How do I practice Lakeflow Connect?"    | ❌ Static source      | ✅ DuckDB/MotherDuck as evolving source     |
+| Scenario                                 | Traditional Demo DB    | This Package                                |
+| ---------------------------------------- | ---------------------- | ------------------------------------------- |
+| "How do I write a complex JOIN?"         | ✅ AdventureWorks      | ❌ Not the focus                            |
+| "How do I test Data Vault patterns?"     | ✅ Willibald           | ❌ Not the focus                            |
+| "How do I detect changed records?"       | ❌ Static data         | ✅ Apply deltas, observe changes            |
+| "How do I test incremental loads?"       | ❌ No state evolution  | ✅ Apply Day 1, then Day 2, then Day 3      |
+| "How does CDC work?"                     | ❌ No change tracking  | ✅ Azure SQL with change tracking enabled   |
+| "How do I handle soft deletes?"          | ❌ No deleted records  | ✅ `deleted_at` column pattern              |
+| "How do I test pipeline reset/recovery?" | ❌ Can't reset state   | ✅ `demo_reset` operation                   |
+| "How do I practice Lakeflow Connect?"    | ❌ Static source       | ✅ DuckDB/MotherDuck as evolving source     |
 
 ### Complementary, Not Competing
 
