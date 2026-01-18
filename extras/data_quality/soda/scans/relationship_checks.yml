@@ -1,0 +1,85 @@
+# Soda Scan: Referential Integrity Validation
+#
+# Validates foreign key relationships across all tables at any state.
+# These checks should pass regardless of whether you're at baseline or
+# after applying deltas.
+#
+# Usage:
+#   soda scan -d demo_source -c configuration.yml relationship_checks.yml
+
+# jaffle_shop referential integrity
+checks for jaffle_shop.orders:
+  - name: Orders reference valid customers
+  - values in (customer_id) must exist in jaffle_shop.customers (customer_id):
+      name: Valid customer references in orders
+
+checks for jaffle_shop.order_items:
+  - name: Order items reference valid orders
+  - values in (order_id) must exist in jaffle_shop.orders (order_id):
+      name: Valid order references in order_items
+  - name: Order items reference valid products
+  - values in (product_id) must exist in jaffle_shop.products (product_id):
+      name: Valid product references in order_items
+
+checks for jaffle_shop.payments:
+  - name: Payments reference valid orders
+  - values in (order_id) must exist in jaffle_shop.orders (order_id):
+      name: Valid order references in payments
+      # Only check if payments table has data
+      filter: order_id is not null
+
+# jaffle_crm referential integrity
+checks for jaffle_crm.email_activity:
+  - name: Email activity references valid campaigns
+  - values in (campaign_id) must exist in jaffle_crm.campaigns (campaign_id):
+      name: Valid campaign references in email_activity
+      filter: campaign_id is not null
+
+# Soft delete validation - no active records should reference soft-deleted records
+checks for jaffle_shop.orders:
+  - name: Active orders don't reference soft-deleted customers
+  - query: |
+      SELECT COUNT(*) as invalid_count
+      FROM jaffle_shop.orders o
+      INNER JOIN jaffle_shop.customers c ON o.customer_id = c.customer_id
+      WHERE o.deleted_at IS NULL
+        AND c.deleted_at IS NOT NULL
+  - invalid_count = 0
+
+# Data type and format checks
+checks for jaffle_shop.customers:
+  - invalid_count(email) = 0:
+      valid format: email
+
+checks for jaffle_shop.products:
+  - invalid_count(price) = 0:
+      valid min: 0
+
+checks for jaffle_shop.orders:
+  - invalid_count(status) = 0:
+      valid values: ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+
+# Audit column checks
+checks for jaffle_shop.customers:
+  - missing_count(created_at) = 0
+  - missing_count(updated_at) = 0
+  # updated_at should always be >= created_at
+  - query: |
+      SELECT COUNT(*) as invalid_count
+      FROM jaffle_shop.customers
+      WHERE updated_at < created_at
+  - invalid_count = 0
+
+checks for jaffle_shop.orders:
+  - missing_count(created_at) = 0
+  - missing_count(updated_at) = 0
+
+checks for jaffle_crm.campaigns:
+  - missing_count(created_at) = 0
+  - missing_count(updated_at) = 0
+  # Campaign end_date should be >= start_date
+  - query: |
+      SELECT COUNT(*) as invalid_count
+      FROM jaffle_crm.campaigns
+      WHERE end_date < start_date
+  - invalid_count = 0

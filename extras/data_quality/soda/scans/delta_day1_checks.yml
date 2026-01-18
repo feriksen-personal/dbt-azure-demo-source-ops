@@ -1,0 +1,56 @@
+# Soda Scan: Day 1 Delta Validation
+#
+# Validates that demo_apply_delta --args '{day: 1}' applied changes correctly.
+#
+# Expected changes from baseline:
+# - jaffle_shop.customers: +1 row (ID 6)
+# - jaffle_shop.orders: +3 rows (IDs 6, 7, 8)
+# - jaffle_shop.order_items: +3 rows (IDs 6, 7, 8)
+#
+# Usage:
+#   # After running: dbt run-operation demo_apply_delta --args '{day: 1}'
+#   soda scan -d demo_source -c configuration.yml delta_day1_checks.yml
+
+checks for jaffle_shop.customers:
+  - row_count = 6  # baseline 5 + 1 new
+  - missing_count(customer_id) = 0
+  - duplicate_count(customer_id) = 0
+  - values in (customer_id) must be in [1, 2, 3, 4, 5, 6]
+  # Verify new customer exists
+  - row_count(customer_id = 6) = 1
+
+checks for jaffle_shop.products:
+  - row_count = 5  # unchanged
+
+checks for jaffle_shop.orders:
+  - row_count = 8  # baseline 5 + 3 new
+  - missing_count(order_id) = 0
+  - duplicate_count(order_id) = 0
+  - values in (order_id) must be in [1, 2, 3, 4, 5, 6, 7, 8]
+  # Verify new orders exist
+  - row_count(order_id in (6, 7, 8)) = 3
+  # Referential integrity still valid
+  - values in (customer_id) must exist in jaffle_shop.customers (customer_id)
+
+checks for jaffle_shop.order_items:
+  - row_count = 8  # baseline 5 + 3 new
+  - missing_count(order_item_id) = 0
+  - duplicate_count(order_item_id) = 0
+  - values in (order_item_id) must be in [1, 2, 3, 4, 5, 6, 7, 8]
+  # Verify new order items exist
+  - row_count(order_item_id in (6, 7, 8)) = 3
+  # Referential integrity
+  - values in (order_id) must exist in jaffle_shop.orders (order_id)
+  - values in (product_id) must exist in jaffle_shop.products (product_id)
+
+checks for jaffle_shop.payments:
+  - row_count = 0  # still empty at Day 1
+
+checks for jaffle_crm.campaigns:
+  - row_count = 3  # unchanged
+
+checks for jaffle_crm.email_activity:
+  - row_count = 5  # unchanged
+
+checks for jaffle_crm.web_sessions:
+  - row_count = 5  # unchanged

@@ -1,0 +1,105 @@
+dataContractSpecification: 0.9.2
+id: jaffle_shop_orders
+info:
+  title: Jaffle Shop Orders
+  version: 1.0.0
+  description: |
+    Customer orders from the jaffle_shop ERP system.
+
+    This table tracks order transactions with customer relationships.
+    Baseline state: 5 orders (IDs 1-5)
+    Day 1 delta: +3 orders (IDs 6-8)
+    Day 2 delta: +3 orders (IDs 9-11)
+    Day 3 delta: +3 orders (IDs 12-14)
+  owner: Demo Team
+  contact:
+    name: dbt-origin-simulator-ops
+    url: https://github.com/feriksen-personal/dbt-origin-simulator-ops
+
+servers:
+  duckdb:
+    type: duckdb
+    location: data/demo_source.duckdb
+    schema: jaffle_shop
+  databricks:
+    type: databricks
+    host: ${DATABRICKS_SERVER_HOSTNAME}
+    catalog: ${DATABRICKS_CATALOG}
+    schema: erp
+    http_path: ${DATABRICKS_HTTP_PATH}
+
+models:
+  orders:
+    description: Customer orders table
+    type: table
+    fields:
+      - name: order_id
+        type: integer
+        required: true
+        primary: true
+        description: Unique order identifier
+        example: "1"
+
+      - name: customer_id
+        type: integer
+        required: false
+        description: Foreign key to customers table
+        example: "1"
+        references: jaffle_shop.customers.customer_id
+
+      - name: order_date
+        type: date
+        required: false
+        description: Order placement date
+        example: "2024-01-15"
+
+      - name: status
+        type: varchar
+        required: false
+        description: Order status
+        example: "pending"
+        maxLength: 20
+        enum:
+          - pending
+          - processing
+          - shipped
+          - delivered
+          - cancelled
+
+      - name: created_at
+        type: timestamp
+        required: true
+        description: Record creation timestamp
+        example: "2024-01-01T00:00:00Z"
+
+      - name: updated_at
+        type: timestamp
+        required: true
+        description: Record last update timestamp
+        example: "2024-01-01T00:00:00Z"
+
+      - name: deleted_at
+        type: timestamp
+        required: false
+        description: Soft delete timestamp (NULL = active, non-NULL = cancelled)
+        example: null
+
+quality:
+  type: SodaCL
+  specification: |
+    checks for orders:
+      # Baseline state
+      - row_count = 5
+      - missing_count(order_id) = 0
+      - duplicate_count(order_id) = 0
+      # Referential integrity
+      - values in (customer_id) must exist in jaffle_shop.customers (customer_id)
+      # Data quality
+      - invalid_count(status) = 0:
+          valid values: ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+
+tags:
+  - demo
+  - deterministic
+  - erp
+  - transactional
