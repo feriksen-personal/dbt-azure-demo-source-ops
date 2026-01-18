@@ -1,4 +1,4 @@
-# Welcome to dbt-azure-demo-source-ops Wiki
+# Welcome to dbt-origin-simulator-ops Wiki
 
 Complete documentation for managing demo source data in dbt projects.
 
@@ -28,7 +28,7 @@ Complete documentation for managing demo source data in dbt projects.
 
 ## What's This Package?
 
-**dbt-azure-demo-source-ops** provides four simple operations to manage realistic demo source data for dbt projects:
+**dbt-origin-simulator-ops** provides four simple operations to manage realistic demo source data for dbt projects:
 
 - `demo_load_baseline` - Initialize with baseline data
 - `demo_apply_delta` - Apply day 1/2/3 changes (simulate business activity)
@@ -57,7 +57,7 @@ Popular databases like **[AdventureWorks](https://learn.microsoft.com/en-us/sql/
 
 ### This Package: Data Engineering Focus
 
-**dbt-azure-demo-source-ops** is designed for a different purpose:
+**dbt-origin-simulator-ops** is designed for a different purpose:
 
 - Learning **data integration patterns** (incremental loads, CDC, SCD Type 2)
 - Testing **data pipeline orchestration** (Lakeflow Connect, Databricks workflows)
@@ -104,9 +104,9 @@ This package is for the **infrastructure layer** - the often-overlooked but crit
 
 - **Have questions?** Check the [FAQ](FAQ)
 - **Encountered an error?** See [Troubleshooting](Troubleshooting)
-- **Found a bug?** [Open an issue](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/issues)
-- **Want to contribute?** See [Contributing](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/blob/main/CONTRIBUTING.md)
+- **Found a bug?** [Open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues)
+- **Want to contribute?** See [Contributing](https://github.com/feriksen-personal/dbt-origin-simulator-ops/blob/main/CONTRIBUTING.md)
 
 ---
 
-**Main Repository:** [dbt-azure-demo-source-ops](https://github.com/feriksen-personal/dbt-azure-demo-source-ops)
+**Main Repository:** [dbt-origin-simulator-ops](https://github.com/feriksen-personal/dbt-origin-simulator-ops)

@@ -1,6 +1,6 @@
 # Getting Started
 
-Complete guide for first-time users of **dbt-azure-demo-source-ops**.
+Complete guide for first-time users of **dbt-origin-simulator-ops**.
 
 ---
 
@@ -28,7 +28,7 @@ Add to your `packages.yml`:
 
 ```yaml
 packages:
-  - git: "https://github.com/feriksen-personal/dbt-azure-demo-source-ops"
+  - git: "https://github.com/feriksen-personal/dbt-origin-simulator-ops"
     revision: v1.0.0  # Or latest version
 ```
 
@@ -162,7 +162,7 @@ vars:
 
 ## First Operations Walkthrough
 
-Now that your environment is configured, let's initialize and explore the demo data.
+Now that your environment is configured, let's initialize and explore the source data.
 
 ### Step 1: Load Baseline Data
 
@@ -307,7 +307,7 @@ dbt run-operation demo_reset --profile demo_source
 **Expected output:**
 
 ```
-Resetting demo databases to baseline...
+Resetting source databases to baseline...
 → Truncating jaffle_shop tables...
   ✓ Truncated jaffle_shop tables
 → Truncating jaffle_crm tables...
@@ -453,4 +453,4 @@ dbt run-operation demo_reset --profile demo_source
 
 ---
 
-**Need more help?** See [Troubleshooting](Troubleshooting) or [open an issue](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/issues).
+**Need more help?** See [Troubleshooting](Troubleshooting) or [open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues).

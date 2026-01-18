@@ -88,7 +88,7 @@ The package uses a **reserved ID range pattern** to prevent conflicts:
 Add a test customer for a specific scenario:
 
 ```sql
--- Connect to your demo database
+-- Connect to your source database
 -- DuckDB: duckdb data/demo.duckdb
 -- Azure SQL: Use your SQL client
 
@@ -749,4 +749,4 @@ SELECT * FROM jaffle_shop.customers WHERE customer_id >= 5000;
 
 ---
 
-**Questions?** See [FAQ](FAQ) or [open an issue](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/issues).
+**Questions?** See [FAQ](FAQ) or [open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues).

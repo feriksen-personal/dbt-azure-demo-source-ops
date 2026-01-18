@@ -11,7 +11,7 @@
 #
 # Copy to: .github/workflows/test-with-demo-sources.yml
 #
-# Documentation: https://github.com/feriksen-personal/dbt-azure-demo-source-ops/wiki
+# Documentation: https://github.com/feriksen-personal/dbt-origin-simulator-ops/wiki
 
 name: Test with Demo Sources
 
@@ -78,10 +78,10 @@ jobs:
                 # Add your project-specific configuration here
           EOF
 
-      # Load baseline demo data (Day 0)
+      # Load baseline source data (Day 0)
       - name: Initialize demo source databases
         run: |
-          echo "Loading baseline demo data..."
+          echo "Loading baseline source data..."
           dbt run-operation demo_load_baseline --profile demo_source
 
       # Verify baseline data was loaded correctly
@@ -223,7 +223,7 @@ jobs:
                 threads: 4
           EOF
 
-      - name: Load baseline demo data
+      - name: Load baseline source data
         run: dbt run-operation demo_load_baseline --profile demo_source
 
       # Run Soda Core quality checks on baseline data
@@ -333,7 +333,7 @@ jobs:
 # 5. Add your project-specific test steps
 #
 # Profile Setup:
-# - The demo_source profile is for loading/managing demo databases
+# - The demo_source profile is for loading/managing source databases
 # - Your project profile (my_project) is for running YOUR dbt models
 # - Both profiles can use the same DuckDB database or separate databases
 #

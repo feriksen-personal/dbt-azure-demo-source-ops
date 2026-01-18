@@ -1,6 +1,6 @@
 # Operations Guide
 
-Detailed documentation of the four core operations in **dbt-azure-demo-source-ops**.
+Detailed documentation of the four core operations in **dbt-origin-simulator-ops**.
 
 ---
 
@@ -362,7 +362,7 @@ dbt run-operation demo_reset --profile demo_source
 ### Expected Output
 
 ```
-Resetting demo databases to baseline...
+Resetting source databases to baseline...
 → Truncating jaffle_shop tables...
   ✓ Truncated jaffle_shop tables
 → Truncating jaffle_crm tables...
@@ -565,7 +565,7 @@ dbt run-operation demo_reset --profile demo_source
 
 ```yaml
 # GitHub Actions example
-- name: Setup demo data
+- name: Setup source data
   run: |
     dbt deps
     dbt run-operation demo_load_baseline --profile demo_source
@@ -616,4 +616,4 @@ dbt run-operation demo_reset --profile demo_source
 
 ---
 
-**Questions?** See [FAQ](FAQ) or [open an issue](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/issues).
+**Questions?** See [FAQ](FAQ) or [open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues).

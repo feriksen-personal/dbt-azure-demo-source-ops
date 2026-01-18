@@ -1,5 +1,5 @@
 {
-  "name": "dbt-azure-demo-source-ops",
+  "name": "dbt-origin-simulator-ops",
   "image": "python:3.11-slim",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
