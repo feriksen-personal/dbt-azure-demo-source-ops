@@ -1,6 +1,6 @@
 # Contributing to dbt-origin-simulator-ops
 
-Thank you for your interest in contributing! This package demonstrates production-grade data engineering patterns with deterministic, reproducible demo data across multiple platforms.
+Thank you for your interest in contributing! This package allows you to demonstrate production-grade data engineering patterns with deterministic, reproducible demo data across multiple platforms.
 
 ## Quick Start with Dev Container
 
