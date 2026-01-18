@@ -214,7 +214,7 @@ cp extras/cicd/github-actions.yml .github/workflows/test-with-demo-sources.yml
 # What each job does:
 #
 # test-baseline:
-#   - Loads baseline demo data (Day 0: 100 customers, 500 orders)
+#   - Loads baseline source data (Day 0: 100 customers, 500 orders)
 #   - Runs your dbt models against the demo sources
 #   - Verifies data was loaded correctly
 #
@@ -259,7 +259,7 @@ If you override the default database names:
 ```yaml
 # In your dbt_project.yml
 vars:
-  demo_source_ops:
+  origin_simulator_ops:
     shop_db: 'my_shop'
     crm_db: 'my_crm'
 
@@ -287,6 +287,6 @@ make baseline TARGET=motherduck
 
 ## Need Help?
 
-- **Questions?** [Open an issue](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/issues)
-- **Wiki**: [Full documentation](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/wiki)
-- **Getting Started**: [Setup guide](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/wiki/Getting-Started)
+- **Questions?** [Open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues)
+- **Wiki**: [Full documentation](https://github.com/feriksen-personal/dbt-origin-simulator-ops/wiki)
+- **Getting Started**: [Setup guide](https://github.com/feriksen-personal/dbt-origin-simulator-ops/wiki/Getting-Started)

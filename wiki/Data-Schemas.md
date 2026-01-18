@@ -1,6 +1,6 @@
 # Data Schemas
 
-Complete schema reference for all tables in **dbt-azure-demo-source-ops**.
+Complete schema reference for all tables in **dbt-origin-simulator-ops**.
 
 ---
 
@@ -707,4 +707,4 @@ Tables that only insert (no updates):
 
 ---
 
-**Questions?** See [FAQ](FAQ) or [open an issue](https://github.com/feriksen-personal/dbt-azure-demo-source-ops/issues).
+**Questions?** See [FAQ](FAQ) or [open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues).
