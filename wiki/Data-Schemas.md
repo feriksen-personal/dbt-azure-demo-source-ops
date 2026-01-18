@@ -1,12 +1,12 @@
 # Data Schemas
 
-Complete schema reference for all tables in **dbt-origin-simulator-ops**.
+Complete schema reference for all source tables.
 
 ---
 
 ## Overview
 
-This package manages two databases representing different business systems:
+This package manages two source databases representing different upstream business systems:
 
 | Database | Purpose | Tables | Business Domain |
 |----------|---------|--------|-----------------|
@@ -663,15 +663,11 @@ Complete ID ranges at each state for all tables:
 | email_activity | 250 | 201-250 | 1-250 |
 | web_sessions | 300 | 251-300 | 1-300 |
 
-### Custom Data (Reserved Range)
+### Custom Data
 
-All tables reserve IDs **5000+** for user-added custom data.
+If you need to insert custom data for specific test scenarios, be mindful of primary key collisions with package-managed data — this is on you to manage.
 
-**Package uses**: 1-2000
-**Reserved for custom**: 5000+
-**Gap**: 2001-4999 (safety buffer)
-
-See [Custom Data](Custom-Data) for guidelines on adding your own test data.
+Run `demo_reset` anytime to return to a known valid baseline state.
 
 ---
 
@@ -701,10 +697,10 @@ Tables that only insert (no updates):
 
 ## Next Steps
 
-- See [Operations Guide](Operations-Guide) for how to load and modify this data
-- See [Custom Data](Custom-Data) for adding your own test data
+- See [Operations Guide](Operations-Guide) for how to load and modify source data
 - See [Getting Started](Getting-Started) for installation and setup
+- See [Extras](Extras) for data quality contracts
 
 ---
 
-**Questions?** See [FAQ](FAQ) or [open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues).
+**Questions?** [Open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues)

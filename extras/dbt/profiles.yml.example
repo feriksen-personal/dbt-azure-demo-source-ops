@@ -3,14 +3,14 @@
 # Copy this file to ~/.dbt/profiles.yml and customize for your environment.
 #
 # Usage:
-#   dbt run-operation demo_load_baseline --profile demo_source               # Uses default 'dev' target
-#   dbt run-operation demo_load_baseline --profile demo_source --target motherduck
-#   dbt run-operation demo_load_baseline --profile demo_source --target azure
-#   dbt run-operation demo_load_baseline --profile demo_source --target databricks
+#   dbt run-operation demo_load_baseline --profile ingestion_simulator               # Uses default 'dev' target
+#   dbt run-operation demo_load_baseline --profile ingestion_simulator --target motherduck
+#   dbt run-operation demo_load_baseline --profile ingestion_simulator --target azure
+#   dbt run-operation demo_load_baseline --profile ingestion_simulator --target databricks
 #
 # Documentation: https://github.com/feriksen-personal/dbt-azure-demo-source-ops/wiki/Getting-Started
 
-demo_source:
+ingestion_simulator:
   target: dev  # Default target (change to motherduck, azure, or databricks if preferred)
 
   outputs:
@@ -22,7 +22,7 @@ demo_source:
     # Database files: Created in the path specified below
     dev:
       type: duckdb
-      path: 'data/demo_source.duckdb'  # Relative or absolute path
+      path: 'data/ingestion_simulator.duckdb'  # Relative or absolute path
       threads: 4
 
     # ========================================================================
@@ -38,7 +38,7 @@ demo_source:
     #   export MOTHERDUCK_TOKEN=your-motherduck-service-token-here
     #
     # Testing connection:
-    #   dbt debug --profile demo_source --target motherduck
+    #   dbt debug --profile ingestion_simulator --target motherduck
     motherduck:
       type: duckdb
       path: 'md:'  # Special path for MotherDuck - databases created automatically
@@ -60,7 +60,7 @@ demo_source:
     #   export DEMO_SQL_PASSWORD=your-password
     #
     # Testing connection:
-    #   dbt debug --profile demo_source --target azure
+    #   dbt debug --profile ingestion_simulator --target azure
     #
     # Note: Package creates jaffle_shop and jaffle_crm databases automatically
     azure:
@@ -93,7 +93,7 @@ demo_source:
     #   export DATABRICKS_CATALOG=your-catalog-name
     #
     # Testing connection:
-    #   dbt debug --profile demo_source --target databricks
+    #   dbt debug --profile ingestion_simulator --target databricks
     #
     # Note: Creates schemas 'erp' (shop tables) and 'crm' (CRM tables) in your catalog
     databricks:
@@ -127,17 +127,17 @@ demo_source:
 #
 # Then source it before running dbt:
 #   source .env
-#   dbt run-operation demo_load_baseline --profile demo_source
+#   dbt run-operation demo_load_baseline --profile ingestion_simulator
 #
 # ============================================================================
 # Testing Your Configuration
 # ============================================================================
 #
 # Test each target:
-#   dbt debug --profile demo_source --target dev
-#   dbt debug --profile demo_source --target motherduck
-#   dbt debug --profile demo_source --target azure
-#   dbt debug --profile demo_source --target databricks
+#   dbt debug --profile ingestion_simulator --target dev
+#   dbt debug --profile ingestion_simulator --target motherduck
+#   dbt debug --profile ingestion_simulator --target azure
+#   dbt debug --profile ingestion_simulator --target databricks
 #
 # Expected output:
 #   Configuration:
@@ -149,10 +149,10 @@ demo_source:
 # Troubleshooting
 # ============================================================================
 #
-# Issue: "Profile demo_source does not exist"
+# Issue: "Profile ingestion_simulator does not exist"
 # Solution: Ensure this file is at ~/.dbt/profiles.yml
 #
-# Issue: "Could not find profile named 'demo_source'"
+# Issue: "Could not find profile named 'ingestion_simulator'"
 # Solution: Check YAML indentation (use spaces, not tabs)
 #
 # Issue: MotherDuck "token is required"

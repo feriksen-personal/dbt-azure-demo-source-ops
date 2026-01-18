@@ -1,12 +1,12 @@
 # Operations Guide
 
-Detailed documentation of the four core operations in **dbt-origin-simulator-ops**.
+Detailed reference for the four operations that manage your source systems.
 
 ---
 
-## Overview of the 4 Operations
+## Overview
 
-This package provides four simple operations for managing demo source data:
+Four operations to control your source databases:
 
 | Operation | Purpose | When to Use |
 |-----------|---------|-------------|
@@ -19,82 +19,101 @@ All operations are executed via `dbt run-operation` and automatically display st
 
 ---
 
-## Understanding Deterministic Evolution
+## Understanding Deterministic Increments
 
-Unlike random data generators, this package provides **deterministic, reproducible data evolution**. Every operation produces the same results every time:
+Unlike random data generators, this package provides **deterministic, reproducible data increments**. Every operation produces the same results every time.
 
 **Baseline (Day 0):**
 
-- Always creates exactly 5 customers (IDs 1-5)
-- Always creates exactly 5 products (IDs 1-5)
-- Always creates exactly 5 orders (IDs 1-5)
-- Always creates exactly 5 order items (IDs 1-5)
-- Always creates exactly 3 campaigns (IDs 1-3)
-- Always creates exactly 5 email activities (IDs 1-5)
-- Always creates exactly 5 web sessions (IDs 1-5)
+| Table | Rows | ID Range |
+|-------|------|----------|
+| customers | 100 | 1-100 |
+| products | 20 | 1-20 |
+| orders | 500 | 1-500 |
+| order_items | 1200 | 1-1200 |
+| payments | 0 | — |
+| campaigns | 5 | 1-5 |
+| email_activity | 100 | 1-100 |
+| web_sessions | 150 | 1-150 |
 
-**Day 1 Delta:**
+**After Day 1:**
 
-- Always adds customer ID 6
-- Always adds orders 6, 7, 8
-- Always adds order items 6, 7, 8
-- Always results in 6 customers, 8 orders total
+| Table | Rows | New IDs |
+|-------|------|---------|
+| customers | 125 | 101-125 |
+| products | 20 | — |
+| orders | 560 | 501-560 |
+| order_items | 1303 | 1201-1303 |
+| payments | 272 | 1-272 |
+| campaigns | 5 | — |
+| email_activity | 150 | 101-150 |
+| web_sessions | 200 | 151-200 |
 
-**Day 2 Delta:**
+**After Day 2:**
 
-- Always updates product ID 3 price to 24.99
-- Always adds orders 9, 10, 11
-- Always soft-deletes customer ID 1 (sets deleted_at)
-- Always results in 6 customers (1 soft-deleted), 11 orders total
+| Table | Rows | New IDs |
+|-------|------|---------|
+| customers | 147 | 126-147 |
+| products | 20 | (updates only) |
+| orders | 615 | 561-615 |
+| order_items | 1387 | 1304-1387 |
+| payments | 316 | 273-316 |
+| campaigns | 5 | — |
+| email_activity | 200 | 151-200 |
+| web_sessions | 250 | 201-250 |
 
-**Day 3 Delta:**
+**After Day 3:**
 
-- Always adds customer ID 7
-- Always adds orders 12, 13, 14
-- Always results in 7 customers (1 soft-deleted), 14 orders total
+| Table | Rows | New IDs |
+|-------|------|---------|
+| customers | 175 | 148-175 |
+| products | 20 | — |
+| orders | 680 | 616-680 |
+| order_items | 1502 | 1388-1502 |
+| payments | 374 | 317-374 |
+| campaigns | 5 | — |
+| email_activity | 250 | 201-250 |
+| web_sessions | 300 | 251-300 |
 
 This deterministic behavior enables:
 
-- **Verifiable outcomes** - Document exactly what should happen at each phase
-- **Consistent demos** - Show the same data story every time
-- **Reliable testing** - Assert expected row counts in CI
-- **Effective training** - All students see identical results
+- **Verifiable outcomes** — Document exactly what should happen at each state
+- **Consistent demos** — Show the same data story every time
+- **Reliable CI/CD** — Assert expected row counts in automated tests
+- **Effective training** — All participants see identical results
 
-See [Data Schemas](Data-Schemas) for complete ID ranges and relationship details.
+See [Data Schemas](Data-Schemas) for complete table structures and relationships.
 
 ---
 
 ## demo_load_baseline
 
-### What It Does
+Initializes source databases with baseline schema and data (Day 0 state).
 
-Initializes both `jaffle_shop` and `jaffle_crm` databases with baseline schema and seed data (Day 0 state).
+**Creates:**
 
-**Tables Created:**
+**jaffle_shop** (ERP/e-commerce):
+- `customers` — Customer master data with soft delete pattern
+- `products` — Product catalog with pricing
+- `orders` — Order headers with status tracking
+- `order_items` — Order line items
+- `payments` — Payment records (empty at baseline, populated by deltas)
 
-**jaffle_shop**:
-- `customers` - Customer master data
-- `products` - Product catalog
-- `orders` - Order headers
-- `order_items` - Order line items
-- `payments` - Payment records (initially empty, populated by deltas)
-
-**jaffle_crm**:
-- `campaigns` - Marketing campaigns
-- `email_activity` - Email engagement events
-- `web_sessions` - Website session tracking
+**jaffle_crm** (Marketing):
+- `campaigns` — Marketing campaigns
+- `email_activity` — Email engagement events
+- `web_sessions` — Website session tracking
 
 ### When to Use
 
-- **First-time setup**: After installing the package
-- **New environments**: Setting up dev/staging/prod
-- **After infrastructure changes**: Database recreated
-- **Clean slate**: Want Day 0 state without running reset
+- First-time setup after installing the package
+- Setting up new environments
+- Clean slate without running reset
 
 ### Usage
 
 ```bash
-dbt run-operation demo_load_baseline --profile demo_source
+dbt run-operation demo_load_baseline --profile ingestion_simulator
 ```
 
 ### Behavior Details
@@ -186,13 +205,13 @@ Each day includes:
 
 ```bash
 # Apply Day 1 changes
-dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source
+dbt run-operation demo_apply_delta --args '{day: 1}' --profile ingestion_simulator
 
 # Apply Day 2 changes
-dbt run-operation demo_apply_delta --args '{day: 2}' --profile demo_source
+dbt run-operation demo_apply_delta --args '{day: 2}' --profile ingestion_simulator
 
 # Apply Day 3 changes
-dbt run-operation demo_apply_delta --args '{day: 3}' --profile demo_source
+dbt run-operation demo_apply_delta --args '{day: 3}' --profile ingestion_simulator
 ```
 
 **Important**: Must specify `day` parameter (1, 2, or 3)
@@ -394,7 +413,7 @@ Truncates all tables in both databases and reloads baseline data, returning to D
 ### Usage
 
 ```bash
-dbt run-operation demo_reset --profile demo_source
+dbt run-operation demo_reset --profile ingestion_simulator
 ```
 
 ### Behavior Details
@@ -493,7 +512,7 @@ Displays current row counts for all tables in both databases.
 ### Usage
 
 ```bash
-dbt run-operation demo_status --profile demo_source
+dbt run-operation demo_status --profile ingestion_simulator
 ```
 
 ### Expected Output
@@ -558,52 +577,52 @@ Higher-than-expected counts indicate custom data (IDs 5000+) has been added.
 dbt deps
 
 # Load baseline data
-dbt run-operation demo_load_baseline --profile demo_source
+dbt run-operation demo_load_baseline --profile ingestion_simulator
 
 # Verify
-dbt run-operation demo_status --profile demo_source
+dbt run-operation demo_status --profile ingestion_simulator
 ```
 
 ### Workflow 2: Multi-Day Demo
 
 ```bash
 # Start at baseline
-dbt run-operation demo_load_baseline --profile demo_source
+dbt run-operation demo_load_baseline --profile ingestion_simulator
 
 # Progress through days
-dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source
+dbt run-operation demo_apply_delta --args '{day: 1}' --profile ingestion_simulator
 # ... demonstrate Day 1 state ...
 
-dbt run-operation demo_apply_delta --args '{day: 2}' --profile demo_source
+dbt run-operation demo_apply_delta --args '{day: 2}' --profile ingestion_simulator
 # ... demonstrate Day 2 state ...
 
-dbt run-operation demo_apply_delta --args '{day: 3}' --profile demo_source
+dbt run-operation demo_apply_delta --args '{day: 3}' --profile ingestion_simulator
 # ... demonstrate Day 3 state ...
 
 # Reset for next demo
-dbt run-operation demo_reset --profile demo_source
+dbt run-operation demo_reset --profile ingestion_simulator
 ```
 
 ### Workflow 3: CDC/Change Tracking Demo
 
 ```bash
 # Baseline (before CDC enabled)
-dbt run-operation demo_load_baseline --profile demo_source
+dbt run-operation demo_load_baseline --profile ingestion_simulator
 
 # Enable CDC on Azure SQL
 # (run your CDC setup scripts here)
 
 # Apply Day 1 - triggers CDC
-dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source
+dbt run-operation demo_apply_delta --args '{day: 1}' --profile ingestion_simulator
 
 # Query CDC tables to show captured changes
 # (your CDC queries here)
 
 # Apply Day 2 - more CDC changes
-dbt run-operation demo_apply_delta --args '{day: 2}' --profile demo_source
+dbt run-operation demo_apply_delta --args '{day: 2}' --profile ingestion_simulator
 
 # Reset when done
-dbt run-operation demo_reset --profile demo_source
+dbt run-operation demo_reset --profile ingestion_simulator
 ```
 
 ### Workflow 4: CI/CD Integration
@@ -613,13 +632,13 @@ dbt run-operation demo_reset --profile demo_source
 - name: Setup source data
   run: |
     dbt deps
-    dbt run-operation demo_load_baseline --profile demo_source
+    dbt run-operation demo_load_baseline --profile ingestion_simulator
 
 - name: Run tests
   run: dbt test
 
 - name: Teardown
-  run: dbt run-operation demo_reset --profile demo_source
+  run: dbt run-operation demo_reset --profile ingestion_simulator
   if: always()
 ```
 
@@ -627,11 +646,11 @@ dbt run-operation demo_reset --profile demo_source
 
 ```bash
 # Morning session
-dbt run-operation demo_load_baseline --profile demo_source
+dbt run-operation demo_load_baseline --profile ingestion_simulator
 # ... training on baseline state ...
 
 # Afternoon session (same day)
-dbt run-operation demo_reset --profile demo_source
+dbt run-operation demo_reset --profile ingestion_simulator
 # Fresh start for afternoon participants
 ```
 
@@ -656,9 +675,9 @@ dbt run-operation demo_reset --profile demo_source
 ## Next Steps
 
 - See [Data Schemas](Data-Schemas) for complete table documentation
-- See [Custom Data](Custom-Data) for adding your own test data
 - See [Getting Started](Getting-Started) for installation and setup
+- See [Extras](Extras) for data quality contracts and CI/CD templates
 
 ---
 
-**Questions?** See [FAQ](FAQ) or [open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues).
+**Questions?** [Open an issue](https://github.com/feriksen-personal/dbt-origin-simulator-ops/issues)

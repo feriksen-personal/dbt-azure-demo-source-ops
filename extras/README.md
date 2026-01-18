@@ -64,7 +64,7 @@ This folder contains optional files that users can copy into their own projects 
 
 ```bash
 # Copy sources.yml to your project
-cp extras/dbt/sources.yml models/staging/demo_source/sources.yml
+cp extras/dbt/sources.yml models/staging/ingestion_simulator/sources.yml
 
 # Customize database/schema names if needed
 # Then reference in your models:
@@ -88,12 +88,12 @@ export DEMO_SQL_USER=your-user
 export DEMO_SQL_PASSWORD=your-password
 
 # Test each target
-dbt debug --profile demo_source --target dev         # Local DuckDB
-dbt debug --profile demo_source --target motherduck  # MotherDuck cloud
-dbt debug --profile demo_source --target azure       # Azure SQL
+dbt debug --profile ingestion_simulator --target dev         # Local DuckDB
+dbt debug --profile ingestion_simulator --target motherduck  # MotherDuck cloud
+dbt debug --profile ingestion_simulator --target azure       # Azure SQL
 
 # Use specific target with operations
-dbt run-operation demo_load_baseline --profile demo_source --target motherduck
+dbt run-operation demo_load_baseline --profile ingestion_simulator --target motherduck
 ```
 
 ### 3. Soda Core
@@ -110,20 +110,20 @@ cp extras/data_quality/soda/configuration.yml soda/configuration.yml
 # Edit configuration.yml - choose your platform and set connection details
 
 # Run contracts (schema validation, business rules, integrity checks)
-dbt run-operation demo_load_baseline --profile demo_source
-soda scan -d demo_source -c soda/configuration.yml extras/data_quality/soda/contracts/jaffle_shop.yml
-soda scan -d demo_source -c soda/configuration.yml extras/data_quality/soda/contracts/jaffle_crm.yml
+dbt run-operation demo_load_baseline --profile ingestion_simulator
+soda scan -d ingestion_simulator -c soda/configuration.yml extras/data_quality/soda/contracts/jaffle_shop.yml
+soda scan -d ingestion_simulator -c soda/configuration.yml extras/data_quality/soda/contracts/jaffle_crm.yml
 
 # Run scans (deterministic validation)
 # Baseline state validation
-soda scan -d demo_source -c soda/configuration.yml extras/data_quality/soda/scans/baseline_checks.yml
+soda scan -d ingestion_simulator -c soda/configuration.yml extras/data_quality/soda/scans/baseline_checks.yml
 
 # Apply delta and validate
-dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source
-soda scan -d demo_source -c soda/configuration.yml extras/data_quality/soda/scans/delta_day1_checks.yml
+dbt run-operation demo_apply_delta --args '{day: 1}' --profile ingestion_simulator
+soda scan -d ingestion_simulator -c soda/configuration.yml extras/data_quality/soda/scans/delta_day1_checks.yml
 
 # Relationship integrity checks (works at any state)
-soda scan -d demo_source -c soda/configuration.yml extras/data_quality/soda/scans/relationship_checks.yml
+soda scan -d ingestion_simulator -c soda/configuration.yml extras/data_quality/soda/scans/relationship_checks.yml
 
 # Optional: Connect to Soda Cloud for dashboards and alerts
 # - Sign up at https://cloud.soda.io
@@ -137,7 +137,7 @@ soda scan -d demo_source -c soda/configuration.yml extras/data_quality/soda/scan
 pip install datacontract-cli
 
 # Validate contracts against actual data
-dbt run-operation demo_load_baseline --profile demo_source
+dbt run-operation demo_load_baseline --profile ingestion_simulator
 
 # Test baseline state
 datacontract test extras/data_quality/bitol/contracts/jaffle_shop_customers.yml
@@ -178,8 +178,8 @@ cp extras/vscode/tasks.json .vscode/tasks.json
 # - [dbt-demo-source] Verify Baseline Data
 
 # Customize for different targets:
-# Edit .vscode/tasks.json and change --profile demo_source to your profile
-# Or add --target flag: --profile demo_source --target motherduck
+# Edit .vscode/tasks.json and change --profile ingestion_simulator to your profile
+# Or add --target flag: --profile ingestion_simulator --target motherduck
 ```
 
 ### 5. Makefile / justfile
@@ -271,7 +271,7 @@ cp extras/cicd/github-actions.yml .github/workflows/test-with-demo-sources.yml
 If you use a different profile name, update all examples:
 ```yaml
 # Change from:
---profile demo_source
+--profile ingestion_simulator
 
 # To:
 --profile my_project
@@ -290,15 +290,15 @@ vars:
 ```
 
 ### Targets
-All examples use `--profile demo_source` without specifying target (uses default `dev`).
+All examples use `--profile ingestion_simulator` without specifying target (uses default `dev`).
 
 To use a specific target:
 ```bash
 # MotherDuck
-dbt run-operation demo_load_baseline --profile demo_source --target motherduck
+dbt run-operation demo_load_baseline --profile ingestion_simulator --target motherduck
 
 # Azure SQL
-dbt run-operation demo_load_baseline --profile demo_source --target azure
+dbt run-operation demo_load_baseline --profile ingestion_simulator --target azure
 ```
 
 Or override in Makefile/justfile with environment variables:
