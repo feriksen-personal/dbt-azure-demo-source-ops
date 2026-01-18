@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Demo: Load Baseline (Day 0)",
+      "label": "[dbt-demo-source] Load Baseline (Day 0)",
       "type": "shell",
       "command": "dbt run-operation demo_load_baseline --profile demo_source",
       "problemMatcher": [],
@@ -17,7 +17,7 @@
       "group": "none"
     },
     {
-      "label": "Demo: Check Status",
+      "label": "[dbt-demo-source] Check Status",
       "type": "shell",
       "command": "dbt run-operation demo_status --profile demo_source",
       "problemMatcher": [],
@@ -32,7 +32,7 @@
       "group": "none"
     },
     {
-      "label": "Demo: Apply Day 1 Changes",
+      "label": "[dbt-demo-source] Apply Day 1 Changes",
       "type": "shell",
       "command": "dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source",
       "problemMatcher": [],
@@ -47,7 +47,7 @@
       "group": "none"
     },
     {
-      "label": "Demo: Apply Day 2 Changes",
+      "label": "[dbt-demo-source] Apply Day 2 Changes",
       "type": "shell",
       "command": "dbt run-operation demo_apply_delta --args '{day: 2}' --profile demo_source",
       "problemMatcher": [],
@@ -62,7 +62,7 @@
       "group": "none"
     },
     {
-      "label": "Demo: Apply Day 3 Changes",
+      "label": "[dbt-demo-source] Apply Day 3 Changes",
       "type": "shell",
       "command": "dbt run-operation demo_apply_delta --args '{day: 3}' --profile demo_source",
       "problemMatcher": [],
@@ -77,7 +77,7 @@
       "group": "none"
     },
     {
-      "label": "Demo: Reset to Baseline",
+      "label": "[dbt-demo-source] Reset to Baseline",
       "type": "shell",
       "command": "dbt run-operation demo_reset --profile demo_source",
       "problemMatcher": [],
@@ -92,7 +92,7 @@
       "group": "none"
     },
     {
-      "label": "Demo: Full Workflow (Baseline + All 3 Days)",
+      "label": "[dbt-demo-source] Full Workflow (Baseline + All 3 Days)",
       "type": "shell",
       "command": "dbt run-operation demo_load_baseline --profile demo_source && dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source && dbt run-operation demo_apply_delta --args '{day: 2}' --profile demo_source && dbt run-operation demo_apply_delta --args '{day: 3}' --profile demo_source && dbt run-operation demo_status --profile demo_source",
       "problemMatcher": [],
@@ -107,7 +107,7 @@
       "group": "none"
     },
     {
-      "label": "Demo: Verify Baseline Data",
+      "label": "[dbt-demo-source] Verify Baseline Data",
       "type": "shell",
       "command": "dbt run-operation demo_verify_baseline --profile demo_source",
       "problemMatcher": [],

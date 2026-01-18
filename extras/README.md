@@ -112,14 +112,14 @@ cp extras/vscode/tasks.json .vscode/tasks.json
 # Cmd+Shift+P (Mac) / Ctrl+Shift+P (Windows/Linux) → "Tasks: Run Task"
 
 # Available tasks:
-# - Demo: Load Baseline (Day 0)
-# - Demo: Check Status
-# - Demo: Apply Day 1 Changes
-# - Demo: Apply Day 2 Changes
-# - Demo: Apply Day 3 Changes
-# - Demo: Reset to Baseline
-# - Demo: Full Workflow (Baseline + All 3 Days)
-# - Demo: Verify Baseline Data
+# - [dbt-demo-source] Load Baseline (Day 0)
+# - [dbt-demo-source] Check Status
+# - [dbt-demo-source] Apply Day 1 Changes
+# - [dbt-demo-source] Apply Day 2 Changes
+# - [dbt-demo-source] Apply Day 3 Changes
+# - [dbt-demo-source] Reset to Baseline
+# - [dbt-demo-source] Full Workflow (Baseline + All 3 Days)
+# - [dbt-demo-source] Verify Baseline Data
 
 # Customize for different targets:
 # Edit .vscode/tasks.json and change --profile demo_source to your profile
