@@ -95,6 +95,7 @@ dbt run-operation demo_load_baseline --profile demo_source --target motherduck
 ```bash
 # Install Soda Core for your platform
 pip install soda-core-duckdb              # For DuckDB/MotherDuck
+pip install soda-core-spark[databricks]   # For Databricks
 pip install soda-core-sqlserver           # For Azure SQL
 
 # Copy configuration file (or customize inline)
