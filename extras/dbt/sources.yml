@@ -1,0 +1,365 @@
+version: 2
+
+sources:
+  - name: jaffle_shop
+    description: >
+      E-commerce and order management system with transactional data.
+      Managed by dbt-azure-demo-source-ops package.
+    database: jaffle_shop
+    schema: main  # DuckDB uses 'main', Azure SQL uses 'dbo'
+
+    tables:
+      - name: customers
+        description: >
+          Customer master data with soft delete pattern.
+          Active customers have deleted_at IS NULL.
+        columns:
+          - name: customer_id
+            description: Primary key, unique customer identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: first_name
+            description: Customer's first name
+
+          - name: last_name
+            description: Customer's last name
+
+          - name: email
+            description: Customer's email address
+
+          - name: created_at
+            description: When customer record was created
+            tests:
+              - not_null
+
+          - name: updated_at
+            description: When customer record was last modified
+            tests:
+              - not_null
+
+          - name: deleted_at
+            description: Soft delete timestamp (NULL = active, non-NULL = deleted)
+
+        # Freshness check: data should not be older than 31 days
+        freshness:
+          warn_after: {count: 31, period: day}
+          error_after: {count: 35, period: day}
+
+      - name: products
+        description: >
+          Product catalog with soft delete pattern.
+          Active products have deleted_at IS NULL (discontinued products have a timestamp).
+        columns:
+          - name: product_id
+            description: Primary key, unique product identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: name
+            description: Product name
+
+          - name: category
+            description: Product category
+
+          - name: price
+            description: Product price
+            tests:
+              - not_null
+
+          - name: created_at
+            description: When product record was created
+            tests:
+              - not_null
+
+          - name: updated_at
+            description: When product record was last modified
+            tests:
+              - not_null
+
+          - name: deleted_at
+            description: Soft delete timestamp (NULL = active, non-NULL = discontinued)
+
+      - name: orders
+        description: >
+          Order headers with status tracking.
+          Statuses include: pending, processing, shipped, delivered, cancelled.
+        columns:
+          - name: order_id
+            description: Primary key, unique order identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: customer_id
+            description: Foreign key to customers table
+            tests:
+              - not_null
+              - relationships:
+                  to: source('jaffle_shop', 'customers')
+                  field: customer_id
+
+          - name: order_date
+            description: Date when order was placed
+
+          - name: status
+            description: Order status (pending, processing, shipped, delivered, cancelled)
+            tests:
+              - accepted_values:
+                  values: ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+
+          - name: created_at
+            description: When order record was created
+            tests:
+              - not_null
+
+          - name: updated_at
+            description: When order record was last modified (e.g., status changes)
+            tests:
+              - not_null
+
+          - name: deleted_at
+            description: Soft delete timestamp (NULL = active, non-NULL = cancelled/deleted)
+
+        # Freshness check: orders should be recent
+        freshness:
+          warn_after: {count: 31, period: day}
+          error_after: {count: 35, period: day}
+
+      - name: order_items
+        description: >
+          Order line items linking products to orders with quantities and pricing.
+          Typically append-only (line items are immutable once created).
+        columns:
+          - name: order_item_id
+            description: Primary key, unique order item identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: order_id
+            description: Foreign key to orders table
+            tests:
+              - not_null
+              - relationships:
+                  to: source('jaffle_shop', 'orders')
+                  field: order_id
+
+          - name: product_id
+            description: Foreign key to products table
+            tests:
+              - not_null
+              - relationships:
+                  to: source('jaffle_shop', 'products')
+                  field: product_id
+
+          - name: quantity
+            description: Quantity of product ordered
+            tests:
+              - not_null
+
+          - name: unit_price
+            description: Price per unit at time of order
+            tests:
+              - not_null
+
+          - name: created_at
+            description: When order item was created
+            tests:
+              - not_null
+
+          - name: updated_at
+            description: When order item was last modified
+            tests:
+              - not_null
+
+          - name: deleted_at
+            description: Soft delete timestamp (rarely used, line items typically immutable)
+
+        # Freshness check
+        freshness:
+          warn_after: {count: 31, period: day}
+
+      - name: payments
+        description: >
+          Payment records for orders.
+          Added in delta files (not present in baseline).
+          Typically append-only transactional data.
+        columns:
+          - name: payment_id
+            description: Primary key, unique payment identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: order_id
+            description: Foreign key to orders table
+            tests:
+              - not_null
+              - relationships:
+                  to: source('jaffle_shop', 'orders')
+                  field: order_id
+
+          - name: payment_method
+            description: Payment method (credit_card, debit_card, bank_transfer, cash)
+            tests:
+              - accepted_values:
+                  values: ['credit_card', 'debit_card', 'bank_transfer', 'cash']
+
+          - name: amount
+            description: Payment amount
+            tests:
+              - not_null
+
+          - name: created_at
+            description: When payment was created
+            tests:
+              - not_null
+
+          - name: updated_at
+            description: When payment record was last modified
+            tests:
+              - not_null
+
+          - name: deleted_at
+            description: Soft delete timestamp (rarely used)
+
+        # Freshness check
+        freshness:
+          warn_after: {count: 31, period: day}
+
+  - name: jaffle_crm
+    description: >
+      Marketing and CRM system with campaign and engagement tracking data.
+      Managed by dbt-azure-demo-source-ops package.
+    database: jaffle_crm
+    schema: main  # DuckDB uses 'main', Azure SQL uses 'dbo'
+
+    tables:
+      - name: campaigns
+        description: >
+          Marketing campaign master data with budgets and dates.
+          Active campaigns have deleted_at IS NULL.
+        columns:
+          - name: campaign_id
+            description: Primary key, unique campaign identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: campaign_name
+            description: Name of the marketing campaign
+
+          - name: start_date
+            description: Campaign start date
+
+          - name: end_date
+            description: Campaign end date
+
+          - name: budget
+            description: Campaign budget
+            tests:
+              - not_null
+
+          - name: created_at
+            description: When campaign record was created
+            tests:
+              - not_null
+
+          - name: updated_at
+            description: When campaign record was last modified
+            tests:
+              - not_null
+
+          - name: deleted_at
+            description: Soft delete timestamp (NULL = active, non-NULL = archived)
+
+      - name: email_activity
+        description: >
+          Email engagement event tracking (sent, opened, clicked).
+          Append-only transactional data.
+        columns:
+          - name: activity_id
+            description: Primary key, unique email activity identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: customer_id
+            description: Customer who received the email (references jaffle_shop.customers)
+
+          - name: campaign_id
+            description: Foreign key to campaigns table
+            tests:
+              - not_null
+              - relationships:
+                  to: source('jaffle_crm', 'campaigns')
+                  field: campaign_id
+
+          - name: sent_date
+            description: When email was sent
+
+          - name: opened
+            description: Whether email was opened (boolean)
+
+          - name: clicked
+            description: Whether links in email were clicked (boolean)
+
+          - name: created_at
+            description: When event was recorded
+            tests:
+              - not_null
+
+          - name: updated_at
+            description: When event record was last modified (rarely changes, append-only)
+            tests:
+              - not_null
+
+          - name: deleted_at
+            description: Soft delete timestamp (rarely used, events are immutable)
+
+        # Freshness check
+        freshness:
+          warn_after: {count: 31, period: day}
+
+      - name: web_sessions
+        description: >
+          Website session tracking with page views.
+          Append-only transactional data.
+        columns:
+          - name: session_id
+            description: Primary key, unique session identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: customer_id
+            description: Customer who visited (references jaffle_shop.customers)
+
+          - name: session_start
+            description: When session started
+
+          - name: session_end
+            description: When session ended
+
+          - name: page_views
+            description: Number of pages viewed in session
+
+          - name: created_at
+            description: When session was recorded
+            tests:
+              - not_null
+
+          - name: updated_at
+            description: When session record was last modified (could update if session extends)
+            tests:
+              - not_null
+
+          - name: deleted_at
+            description: Soft delete timestamp (rarely used)
+
+        # Freshness check
+        freshness:
+          warn_after: {count: 31, period: day}
