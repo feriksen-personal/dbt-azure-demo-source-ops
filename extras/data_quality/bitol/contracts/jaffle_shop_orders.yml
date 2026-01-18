@@ -7,10 +7,10 @@ info:
     Customer orders from the jaffle_shop ERP system.
 
     This table tracks order transactions with customer relationships.
-    Baseline state: 5 orders (IDs 1-5)
-    Day 1 delta: +3 orders (IDs 6-8)
-    Day 2 delta: +3 orders (IDs 9-11)
-    Day 3 delta: +3 orders (IDs 12-14)
+    Baseline state: 500 orders (IDs 1-500)
+    Day 1 delta: +60 orders (IDs 501-560)
+    Day 2 delta: +55 orders (IDs 561-615)
+    Day 3 delta: +65 orders (IDs 616-680)
   owner: Demo Team
   contact:
     name: dbt-origin-simulator-ops
@@ -88,8 +88,8 @@ quality:
   type: SodaCL
   specification: |
     checks for orders:
-      # Baseline state
-      - row_count = 5
+      # Row count validation (append-only, never decreases)
+      - row_count >= 500
       - missing_count(order_id) = 0
       - duplicate_count(order_id) = 0
       # Referential integrity

@@ -7,10 +7,10 @@ info:
     Web session events from the jaffle_crm marketing system.
 
     **Deterministic Evolution:**
-    - Baseline state: 10 web sessions (IDs 1-10)
-    - Day 1 delta: +3 web sessions (IDs 11-13)
-    - Day 2 delta: +3 web sessions (IDs 14-16)
-    - Day 3 delta: +3 web sessions (IDs 17-19)
+    - Baseline state: 150 web sessions (IDs 1-150)
+    - Day 1 delta: +30 web sessions (IDs 151-180)
+    - Day 2 delta: +28 web sessions (IDs 181-208)
+    - Day 3 delta: +32 web sessions (IDs 209-240)
 
     **Patterns:**
     - Append-only event stream (immutable sessions)
@@ -89,8 +89,8 @@ quality:
   type: SodaCL
   specification: |
     checks for web_sessions:
-      # Baseline state: exactly 10 web sessions
-      - row_count = 10
+      # Row count validation (append-only, never decreases)
+      - row_count >= 150
 
       # Primary key validation
       - missing_count(session_id) = 0

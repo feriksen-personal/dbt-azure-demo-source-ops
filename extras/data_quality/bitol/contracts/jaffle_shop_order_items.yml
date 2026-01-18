@@ -7,10 +7,10 @@ info:
     Order line items from the jaffle_shop ERP system, linking products to orders.
 
     **Deterministic Evolution:**
-    - Baseline state: 10 order items (IDs 1-10) across 5 orders
-    - Day 1 delta: +6 order items (IDs 11-16) for new orders 6-8
-    - Day 2 delta: +6 order items (IDs 17-22) for new orders 9-11
-    - Day 3 delta: +6 order items (IDs 23-28) for new orders 12-14
+    - Baseline state: 1200 order items (IDs 1-1200)
+    - Day 1 delta: +103 order items (IDs 1201-1303)
+    - Day 2 delta: +84 order items (IDs 1304-1387)
+    - Day 3 delta: +115 order items (IDs 1388-1502)
 
     **Patterns:**
     - Append-only event stream (new items only)
@@ -94,8 +94,8 @@ quality:
   type: SodaCL
   specification: |
     checks for order_items:
-      # Baseline state: exactly 10 order items
-      - row_count = 10
+      # Row count validation (append-only, never decreases)
+      - row_count >= 1200
 
       # Primary key validation
       - missing_count(order_item_id) = 0

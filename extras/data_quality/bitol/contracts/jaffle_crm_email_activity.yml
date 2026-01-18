@@ -7,10 +7,10 @@ info:
     Email engagement events from the jaffle_crm marketing system.
 
     **Deterministic Evolution:**
-    - Baseline state: 10 email activities (IDs 1-10)
-    - Day 1 delta: +3 email activities (IDs 11-13)
-    - Day 2 delta: +3 email activities (IDs 14-16)
-    - Day 3 delta: +3 email activities (IDs 17-19)
+    - Baseline state: 100 email activities (IDs 1-100)
+    - Day 1 delta: +40 email activities (IDs 101-140)
+    - Day 2 delta: +38 email activities (IDs 141-178)
+    - Day 3 delta: +45 email activities (IDs 179-223)
 
     **Patterns:**
     - Append-only event stream (immutable events)
@@ -95,8 +95,8 @@ quality:
   type: SodaCL
   specification: |
     checks for email_activity:
-      # Baseline state: exactly 10 email activities
-      - row_count = 10
+      # Row count validation (append-only, never decreases)
+      - row_count >= 100
 
       # Primary key validation
       - missing_count(activity_id) = 0

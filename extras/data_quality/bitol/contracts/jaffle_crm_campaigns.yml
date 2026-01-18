@@ -6,8 +6,15 @@ info:
   description: |
     Marketing campaign definitions from the jaffle_crm system.
 
-    This table contains marketing campaign master data with budgets and dates.
-    Baseline state: 3 campaigns (IDs 1-3)
+    **Deterministic Evolution:**
+    - Baseline state: 5 campaigns (IDs 1-5)
+    - Day 1 delta: No changes
+    - Day 2 delta: No changes
+    - Day 3 delta: No changes
+
+    **Patterns:**
+    - Static master data - no inserts after baseline
+    - Updates to budget, dates possible
   owner: Demo Team
   contact:
     name: dbt-origin-simulator-ops
@@ -87,7 +94,8 @@ quality:
   specification: |
     checks for campaigns:
       # Baseline state
-      - row_count = 3
+      # Row count validation (static catalog, could grow)
+      - row_count >= 5
       - missing_count(campaign_id) = 0
       - duplicate_count(campaign_id) = 0
       # Data quality

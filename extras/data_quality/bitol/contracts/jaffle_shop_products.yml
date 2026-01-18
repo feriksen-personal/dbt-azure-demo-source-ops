@@ -7,13 +7,14 @@ info:
     Product catalog from the jaffle_shop ERP system.
 
     **Deterministic Evolution:**
-    - Baseline state: 5 products (IDs 1-5)
+    - Baseline state: 20 products (IDs 1-20)
     - Day 1 delta: No changes
-    - Day 2 delta: Product ID 3 price update ($8.99 → $9.99)
+    - Day 2 delta: Price updates only (no row count change)
     - Day 3 delta: No changes
 
     **Patterns:**
-    - No inserts after baseline
+    - Static catalog - no inserts after baseline
+    - Price updates only
     - Price updates tracked via `updated_at`
     - Soft deletes via `deleted_at` timestamp
   owner: ERP System Team
@@ -90,8 +91,8 @@ quality:
   type: SodaCL
   specification: |
     checks for products:
-      # Baseline state: exactly 5 products
-      - row_count = 5
+      # Row count validation (static catalog, could grow)
+      - row_count >= 20
 
       # Primary key validation
       - missing_count(product_id) = 0

@@ -6,9 +6,16 @@ info:
   description: |
     Customer master data from the jaffle_shop ERP system.
 
-    This table contains customer records with soft delete pattern.
-    Baseline state: 5 customers (IDs 1-5)
-    Day 1 delta: +1 customer (ID 6)
+    **Deterministic Evolution:**
+    - Baseline state: 100 customers (IDs 1-100)
+    - Day 1 delta: +25 customers (IDs 101-125)
+    - Day 2 delta: +22 customers (IDs 126-147)
+    - Day 3 delta: +28 customers (IDs 148-175)
+
+    **Patterns:**
+    - Soft deletes (deleted_at column) - row count never decreases
+    - Email addresses must be unique and valid format
+    - Append-only growth pattern
   owner: Demo Team
   contact:
     name: dbt-origin-simulator-ops
@@ -82,8 +89,8 @@ quality:
   type: SodaCL
   specification: |
     checks for customers:
-      # Baseline state
-      - row_count = 5
+      # Row count validation (soft deletes - never decreases)
+      - row_count >= 100
       - missing_count(customer_id) = 0
       - duplicate_count(customer_id) = 0
       - missing_count(created_at) = 0
