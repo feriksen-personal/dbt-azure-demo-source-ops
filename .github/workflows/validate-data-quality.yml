@@ -34,6 +34,18 @@ jobs:
       - name: Install Soda Core
         run: pip install soda-core-duckdb
 
+      - name: Set up dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          demo_source:
+            target: dev
+            outputs:
+              dev:
+                type: duckdb
+                path: 'data/demo_source.duckdb'
+          EOF
+
       - name: Install dbt dependencies
         run: dbt deps --profile demo_source
 
@@ -170,6 +182,18 @@ jobs:
 
       - name: Install datacontract-cli
         run: pip install datacontract-cli
+
+      - name: Set up dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          demo_source:
+            target: dev
+            outputs:
+              dev:
+                type: duckdb
+                path: 'data/demo_source.duckdb'
+          EOF
 
       - name: Install dbt dependencies
         run: dbt deps --profile demo_source
