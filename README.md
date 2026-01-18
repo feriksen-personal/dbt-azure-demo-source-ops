@@ -70,7 +70,7 @@ While built with dbt operations for convenience, the managed source databases ca
 **Key Benefits:**
 
 - ✅ **Zero Configuration** - Works out of the box with sensible defaults
-- 🔄 **Reproducible** - Reset to baseline instantly for consistent state
+- 🔄 **Deterministic & Reproducible** - Same data every run, reset to baseline instantly
 - 📊 **Realistic Data** - Two source systems (ERP + CRM) with proper relationships
 - 🎯 **Four Simple Operations** - `load_baseline`, `apply_delta`, `reset`, `status`
 - 🌐 **Multi-Platform** - DuckDB, MotherDuck, Databricks, Azure SQL
@@ -79,6 +79,51 @@ While built with dbt operations for convenience, the managed source databases ca
 - 🔧 **Tool Agnostic** - Use with dbt, Spark, Python, Fivetran, or any data tool
 
 See the [wiki](https://github.com/feriksen-personal/dbt-origin-simulator-ops/wiki) for detailed use cases and patterns.
+
+---
+
+## Why Deterministic Data?
+
+Unlike random data generators, this package provides **deterministic, reproducible data evolution** - the same data every time you run it. This matters when you need to verify expected results, demonstrate consistent outcomes, or train multiple people with identical datasets.
+
+**Deterministic Evolution:**
+
+```bash
+# Run 1: Baseline
+dbt run-operation demo_load_baseline
+# → Always creates exactly 5 customers, 5 products, 5 orders
+
+# Run 2: Day 1 Delta
+dbt run-operation demo_apply_delta --args '{day: 1}'
+# → Always adds customer ID 6, orders 6-8
+# → Always results in 6 customers, 5 products, 8 orders
+
+# Run 100: Same results every time
+# → Reproducible for demos, reliable for testing
+```
+
+**This means you can:**
+
+- 📋 **Document expected results** - "After Day 2, customer 5 should have 3 orders"
+- ✅ **Write assertions** - `assert(customer_count == 6)` in your CI tests
+- 🎯 **Demo consistently** - Show the same data story every time
+- 👥 **Train effectively** - All students see identical results
+- 🐛 **Debug confidently** - Know what the data *should* be at each step
+
+**When to use this package:**
+
+- Sales demos and POCs (consistent narrative)
+- dbt workshops and training (same results for all students)
+- Testing incremental models (known deltas)
+- Validating transformation logic (expected outcomes)
+- Debugging data pipelines (reproducible state)
+
+**When to use random generation instead:**
+
+- Large-scale performance testing
+- Fuzzing for edge cases
+- Generating thousands of unique realistic values
+- Populating production-scale volumes
 
 ---
 
