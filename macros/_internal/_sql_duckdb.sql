@@ -128,6 +128,9 @@ INSERT INTO jaffle_crm.email_activity (activity_id, customer_id, campaign_id, se
 -- jaffle_crm database schema
 -- Marketing/CRM system tables
 
+-- Create jaffle_crm schema
+CREATE SCHEMA IF NOT EXISTS jaffle_crm;
+
 -- Campaigns table
 CREATE TABLE IF NOT EXISTS jaffle_crm.campaigns (
     campaign_id INTEGER PRIMARY KEY,
@@ -2430,6 +2433,9 @@ INSERT INTO jaffle_shop.products (product_id, name, category, price, created_at,
 {%- macro _get_duckdb_baseline_shop_schema() -%}
 -- jaffle_shop database schema
 -- E-commerce/ERP system tables
+
+-- Create jaffle_shop schema
+CREATE SCHEMA IF NOT EXISTS jaffle_shop;
 
 -- Customers table
 CREATE TABLE IF NOT EXISTS jaffle_shop.customers (
