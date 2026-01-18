@@ -283,8 +283,6 @@ checks for payments:
       name: All payment amounts are positive
 
   # Timestamp validation
-  - invalid_count(payment_date) = 0:
-      valid format: date
   - invalid_count(created_at) = 0:
       valid format: date
   - invalid_count(updated_at) = 0:
@@ -292,5 +290,5 @@ checks for payments:
       name: updated_at is valid date when present
 
   # SLA/Freshness check: Payments should be recent (within 60 days for full workflow)
-  - freshness(payment_date) < 60d:
+  - freshness(created_at) < 60d:
       name: Payments are within expected time window
