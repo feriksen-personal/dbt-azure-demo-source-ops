@@ -28,17 +28,21 @@ Complete documentation for managing demo source data in dbt projects.
 
 ## What's This Package?
 
-**dbt-origin-simulator-ops** provides four simple operations to manage realistic demo source data for dbt projects:
+**dbt-origin-simulator-ops** provides four simple operations to manage **deterministic, reproducible demo source data** for dbt projects:
 
 - `demo_load_baseline` - Initialize with baseline data
 - `demo_apply_delta` - Apply day 1/2/3 changes (simulate business activity)
 - `demo_reset` - Truncate and reload baseline
 - `demo_status` - Show current row counts
 
+**Deterministic means:** Same data every run. Baseline always creates exactly 5 customers, Day 1 always adds customer ID 6, etc. This reproducibility enables consistent demos, reliable testing, and effective training.
+
 ### Supported Platforms
+
 - **DuckDB (Local)** - Local development (zero cloud costs)
 - **MotherDuck** - Cloud collaboration with shared databases (free tier available)
-- **Azure SQL** - Cloud demos with CDC/change tracking
+- **Databricks** - Unity Catalog and Delta Lake patterns (free tier available)
+- **Azure SQL** - Cloud demos with CDC/change tracking (in development)
 
 ---
 

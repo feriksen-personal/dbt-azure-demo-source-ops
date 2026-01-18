@@ -19,6 +19,51 @@ All operations are executed via `dbt run-operation` and automatically display st
 
 ---
 
+## Understanding Deterministic Evolution
+
+Unlike random data generators, this package provides **deterministic, reproducible data evolution**. Every operation produces the same results every time:
+
+**Baseline (Day 0):**
+
+- Always creates exactly 5 customers (IDs 1-5)
+- Always creates exactly 5 products (IDs 1-5)
+- Always creates exactly 5 orders (IDs 1-5)
+- Always creates exactly 5 order items (IDs 1-5)
+- Always creates exactly 3 campaigns (IDs 1-3)
+- Always creates exactly 5 email activities (IDs 1-5)
+- Always creates exactly 5 web sessions (IDs 1-5)
+
+**Day 1 Delta:**
+
+- Always adds customer ID 6
+- Always adds orders 6, 7, 8
+- Always adds order items 6, 7, 8
+- Always results in 6 customers, 8 orders total
+
+**Day 2 Delta:**
+
+- Always updates product ID 3 price to 24.99
+- Always adds orders 9, 10, 11
+- Always soft-deletes customer ID 1 (sets deleted_at)
+- Always results in 6 customers (1 soft-deleted), 11 orders total
+
+**Day 3 Delta:**
+
+- Always adds customer ID 7
+- Always adds orders 12, 13, 14
+- Always results in 7 customers (1 soft-deleted), 14 orders total
+
+This deterministic behavior enables:
+
+- **Verifiable outcomes** - Document exactly what should happen at each phase
+- **Consistent demos** - Show the same data story every time
+- **Reliable testing** - Assert expected row counts in CI
+- **Effective training** - All students see identical results
+
+See [Data Schemas](Data-Schemas) for complete ID ranges and relationship details.
+
+---
+
 ## demo_load_baseline
 
 ### What It Does
