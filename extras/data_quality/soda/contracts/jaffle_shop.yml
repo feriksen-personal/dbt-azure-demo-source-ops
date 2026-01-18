@@ -146,8 +146,8 @@ checks for orders:
   - failed rows:
       fail query: |
         SELECT o.order_id, o.customer_id
-        FROM orders o
-        LEFT JOIN customers c ON o.customer_id = c.customer_id
+        FROM jaffle_shop.orders o
+        LEFT JOIN jaffle_shop.customers c ON o.customer_id = c.customer_id
         WHERE c.customer_id IS NULL
       name: All orders have valid customer_id foreign keys
 
@@ -203,8 +203,8 @@ checks for order_items:
   - failed rows:
       fail query: |
         SELECT oi.order_item_id, oi.order_id
-        FROM order_items oi
-        LEFT JOIN orders o ON oi.order_id = o.order_id
+        FROM jaffle_shop.order_items oi
+        LEFT JOIN jaffle_shop.orders o ON oi.order_id = o.order_id
         WHERE o.order_id IS NULL
       name: All order items have valid order_id foreign keys
 
@@ -212,8 +212,8 @@ checks for order_items:
   - failed rows:
       fail query: |
         SELECT oi.order_item_id, oi.product_id
-        FROM order_items oi
-        LEFT JOIN products p ON oi.product_id = p.product_id
+        FROM jaffle_shop.order_items oi
+        LEFT JOIN jaffle_shop.products p ON oi.product_id = p.product_id
         WHERE p.product_id IS NULL
       name: All order items have valid product_id foreign keys
 
@@ -267,8 +267,8 @@ checks for payments:
   - failed rows:
       fail query: |
         SELECT p.payment_id, p.order_id
-        FROM payments p
-        LEFT JOIN orders o ON p.order_id = o.order_id
+        FROM jaffle_shop.payments p
+        LEFT JOIN jaffle_shop.orders o ON p.order_id = o.order_id
         WHERE o.order_id IS NULL
       name: All payments have valid order_id foreign keys
 
