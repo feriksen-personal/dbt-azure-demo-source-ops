@@ -4,6 +4,8 @@ This folder contains optional files that users can copy into their own projects 
 
 **Important**: These files are templates for YOUR project, not part of the package itself. Copy and customize them as needed.
 
+**Why these matter**: The package provides deterministic, reproducible demo data. These extras help you integrate that data into your workflow - defining sources, validating quality, and automating operations.
+
 ---
 
 ## What's Included
