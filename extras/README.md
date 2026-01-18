@@ -259,7 +259,7 @@ If you override the default database names:
 ```yaml
 # In your dbt_project.yml
 vars:
-  demo_source_ops:
+  origin_simulator_ops:
     shop_db: 'my_shop'
     crm_db: 'my_crm'
 

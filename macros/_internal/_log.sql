@@ -8,8 +8,8 @@
     msg (str): Message to log
 
   Example usage:
-    {{ demo_source_ops._log("Loading baseline data...") }}
-    {{ demo_source_ops._log("✓ Baseline loaded successfully") }}
+    {{ origin_simulator_ops._log("Loading baseline data...") }}
+    {{ origin_simulator_ops._log("✓ Baseline loaded successfully") }}
 #}
 
 {% macro _log(msg) %}

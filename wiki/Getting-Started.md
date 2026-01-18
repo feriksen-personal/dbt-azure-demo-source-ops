@@ -153,7 +153,7 @@ To use different names, add to your `dbt_project.yml`:
 
 ```yaml
 vars:
-  demo_source_ops:
+  origin_simulator_ops:
     shop_db: 'my_shop_db'
     crm_db: 'my_crm_db'
 ```
@@ -351,7 +351,7 @@ pip install dbt-core dbt-duckdb  # or dbt-sqlserver
 2. Check indentation (YAML is whitespace-sensitive)
 3. Run `dbt debug --profile demo_source` to validate
 
-### Issue: "Package demo_source_ops not found"
+### Issue: "Package origin_simulator_ops not found"
 
 **Cause**: Package not installed
 

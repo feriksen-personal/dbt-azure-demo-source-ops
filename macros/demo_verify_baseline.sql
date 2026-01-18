@@ -38,5 +38,5 @@
     'jaffle_crm.web_sessions': 150
   } %}
 
-  {{ demo_source_ops._verify_test_results(expected_counts) }}
+  {{ origin_simulator_ops._verify_test_results(expected_counts) }}
 {% endmacro %}
