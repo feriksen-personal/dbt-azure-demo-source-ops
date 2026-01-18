@@ -66,7 +66,7 @@ jobs:
             extras/data_quality/soda/scans/relationship_checks.yml
 
       - name: Apply Day 1 delta
-        run: dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source
+        run: "dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source"
 
       - name: Validate Soda scan - Day 1 delta checks
         run: |
@@ -142,7 +142,7 @@ jobs:
             extras/data_quality/soda/scans/baseline_checks.yml
 
       - name: Apply Day 1 delta
-        run: dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source --target databricks
+        run: "dbt run-operation demo_apply_delta --args '{day: 1}' --profile demo_source --target databricks"
 
       - name: Validate Soda scan - Day 1 delta checks
         run: |
