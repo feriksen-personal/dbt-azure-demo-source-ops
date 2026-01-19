@@ -9,58 +9,36 @@
   - Utilities: Truncate operations
   - Deltas: Incremental changes for Days 01, 02, 03
 
-  Note: Azure SQL uses 3-level namespace: database.schema.table
-  Databases: jaffle_shop (ERP tables), jaffle_crm (CRM/marketing tables)
-  Schema: dbo (default schema within each database)
+  Note: Azure SQL Database uses single-database with multiple schemas
+  (similar to Databricks catalog structure):
+  - erp schema: ERP/shop tables (customers, products, orders, order_items, payments)
+  - crm schema: CRM/marketing tables (campaigns, email_activity, web_sessions)
 
   T-SQL Considerations:
   - Uses GETDATE() instead of CURRENT_TIMESTAMP
   - Uses DATEADD() instead of INTERVAL
   - Uses BIT instead of BOOLEAN (1/0 instead of TRUE/FALSE)
-  - Extended properties for metadata (sp_addextendedproperty)
 #}
-
 
 {# ============================================================================
    CRM SCHEMA AND SEED DATA
    ============================================================================ #}
 
 {%- macro _get_sqlserver_baseline_crm_schema() -%}
--- jaffle_crm database schema
+-- crm schema (CRM/marketing tables)
 -- Marketing/CRM system tables
--- Database: jaffle_crm | Schema: dbo
+-- Schema: crm
 
--- Ensure we're in the right database
-USE jaffle_crm;
-
--- Add database-level extended property (description)
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0 AND name = 'MS_Description')
+-- Create crm schema if it doesn't exist
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'crm')
 BEGIN
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Customer Relationship Management (CRM) database containing marketing campaign and customer engagement data. This database includes marketing campaigns, email activity events, and web session events. Tables follow append-only event stream pattern for activity tables.';
-END
-
--- Add version tag
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0 AND name = 'origin_simulator_version')
-BEGIN
-    EXEC sp_addextendedproperty
-        @name = N'origin_simulator_version',
-        @value = N'1.0.0';
-END
-
--- Add managed_by tag
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0 AND name = 'managed_by')
-BEGIN
-    EXEC sp_addextendedproperty
-        @name = N'managed_by',
-        @value = N'dbt-origin-simulator-ops';
+    EXEC('CREATE SCHEMA crm')
 END
 
 -- Campaigns table
-IF OBJECT_ID('dbo.campaigns', 'U') IS NULL
+IF OBJECT_ID('crm.campaigns', 'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.campaigns (
+    CREATE TABLE crm.campaigns (
         campaign_id INT NOT NULL PRIMARY KEY,
         campaign_name NVARCHAR(100),
         start_date DATE,
@@ -70,37 +48,12 @@ BEGIN
         updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         deleted_at DATETIME2
     );
-
-    -- Table description
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Marketing campaigns table',
-        @level0type = N'SCHEMA', @level0name = N'dbo',
-        @level1type = N'TABLE', @level1name = N'campaigns';
-
-    -- Column descriptions
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Unique campaign identifier',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'campaigns', @level2type = N'COLUMN', @level2name = N'campaign_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Marketing campaign name',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'campaigns', @level2type = N'COLUMN', @level2name = N'campaign_name';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Campaign start date',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'campaigns', @level2type = N'COLUMN', @level2name = N'start_date';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Campaign end date',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'campaigns', @level2type = N'COLUMN', @level2name = N'end_date';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Campaign budget amount',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'campaigns', @level2type = N'COLUMN', @level2name = N'budget';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record creation timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'campaigns', @level2type = N'COLUMN', @level2name = N'created_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record last update timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'campaigns', @level2type = N'COLUMN', @level2name = N'updated_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Soft delete timestamp (NULL = active, non-NULL = archived)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'campaigns', @level2type = N'COLUMN', @level2name = N'deleted_at';
 END
 
 -- Email activity table (append-only event stream)
-IF OBJECT_ID('dbo.email_activity', 'U') IS NULL
+IF OBJECT_ID('crm.email_activity', 'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.email_activity (
+    CREATE TABLE crm.email_activity (
         activity_id INT NOT NULL PRIMARY KEY,
         customer_id INT,
         campaign_id INT,
@@ -110,41 +63,14 @@ BEGIN
         created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         deleted_at DATETIME2,
-        CONSTRAINT fk_email_activity_campaign FOREIGN KEY (campaign_id) REFERENCES dbo.campaigns(campaign_id)
+        CONSTRAINT fk_email_activity_campaign FOREIGN KEY (campaign_id) REFERENCES crm.campaigns(campaign_id)
     );
-
-    -- Table description
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Email activity event stream table',
-        @level0type = N'SCHEMA', @level0name = N'dbo',
-        @level1type = N'TABLE', @level1name = N'email_activity';
-
-    -- Column descriptions
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Unique email activity identifier',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'activity_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Customer who received the email',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'customer_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Foreign key to campaigns table',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'campaign_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Email sent timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'sent_date';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Whether email was opened',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'opened';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Whether any link was clicked',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'clicked';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record creation timestamp (when event was recorded)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'created_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record last update timestamp (rarely changes for append-only)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'updated_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Soft delete timestamp (rarely used for immutable events)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'email_activity', @level2type = N'COLUMN', @level2name = N'deleted_at';
 END
 
 -- Web sessions table (append-only event stream)
-IF OBJECT_ID('dbo.web_sessions', 'U') IS NULL
+IF OBJECT_ID('crm.web_sessions', 'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.web_sessions (
+    CREATE TABLE crm.web_sessions (
         session_id INT NOT NULL PRIMARY KEY,
         customer_id INT,
         session_start DATETIME2,
@@ -154,38 +80,11 @@ BEGIN
         updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         deleted_at DATETIME2
     );
-
-    -- Table description
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Web session event stream table',
-        @level0type = N'SCHEMA', @level0name = N'dbo',
-        @level1type = N'TABLE', @level1name = N'web_sessions';
-
-    -- Column descriptions
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Unique web session identifier',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'web_sessions', @level2type = N'COLUMN', @level2name = N'session_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Customer associated with session',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'web_sessions', @level2type = N'COLUMN', @level2name = N'customer_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Session start timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'web_sessions', @level2type = N'COLUMN', @level2name = N'session_start';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Session end timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'web_sessions', @level2type = N'COLUMN', @level2name = N'session_end';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Number of pages viewed in session',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'web_sessions', @level2type = N'COLUMN', @level2name = N'page_views';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record creation timestamp (when session was recorded)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'web_sessions', @level2type = N'COLUMN', @level2name = N'created_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record last update timestamp (could update if session extends)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'web_sessions', @level2type = N'COLUMN', @level2name = N'updated_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Soft delete timestamp (rarely used)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'web_sessions', @level2type = N'COLUMN', @level2name = N'deleted_at';
 END
 {%- endmacro %}
 
 {%- macro _get_sqlserver_baseline_crm_campaigns() -%}
-USE jaffle_crm;
-
-INSERT INTO dbo.campaigns (campaign_id, campaign_name, start_date, end_date, budget, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.campaigns (campaign_id, campaign_name, start_date, end_date, budget, created_at, updated_at, deleted_at) VALUES
 (1, 'Spring Sale 2024', DATEADD(day, -30, CAST(GETDATE() AS DATE)), CAST(GETDATE() AS DATE), 5000.0, DATEADD(day, -30, GETDATE()), DATEADD(day, -30, GETDATE()), NULL),
 (2, 'Summer Clearance', DATEADD(day, -25, CAST(GETDATE() AS DATE)), DATEADD(day, 5, CAST(GETDATE() AS DATE)), 7500.0, DATEADD(day, -25, GETDATE()), DATEADD(day, -25, GETDATE()), NULL),
 (3, 'Back to School', DATEADD(day, -20, CAST(GETDATE() AS DATE)), DATEADD(day, 5, CAST(GETDATE() AS DATE)), 3000.0, DATEADD(day, -20, GETDATE()), DATEADD(day, -20, GETDATE()), NULL),
@@ -194,9 +93,7 @@ INSERT INTO dbo.campaigns (campaign_id, campaign_name, start_date, end_date, bud
 {%- endmacro %}
 
 {%- macro _get_sqlserver_baseline_crm_email_activity() -%}
-USE jaffle_crm;
-
-INSERT INTO dbo.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
 (1, 1, 1, DATEADD(day, -1, GETDATE()), 0, 0, DATEADD(day, -1, GETDATE()), DATEADD(day, -1, GETDATE()), NULL),
 (2, 2, 2, DATEADD(day, -8, GETDATE()), 1, 1, DATEADD(day, -8, GETDATE()), DATEADD(day, -8, GETDATE()), NULL),
 (3, 3, 5, DATEADD(day, -3, GETDATE()), 1, 1, DATEADD(day, -3, GETDATE()), DATEADD(day, -3, GETDATE()), NULL),
@@ -300,9 +197,7 @@ INSERT INTO dbo.email_activity (activity_id, customer_id, campaign_id, sent_date
 {%- endmacro %}
 
 {%- macro _get_sqlserver_baseline_crm_web_sessions() -%}
-USE jaffle_crm;
-
-INSERT INTO dbo.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
 (1, 82, DATEADD(day, -8, GETDATE()), DATEADD(minute, 2, DATEADD(day, -8, GETDATE())), 9, DATEADD(day, -8, GETDATE()), DATEADD(day, -8, GETDATE()), NULL),
 (2, 32, DATEADD(day, -15, GETDATE()), DATEADD(minute, 9, DATEADD(day, -15, GETDATE())), 4, DATEADD(day, -15, GETDATE()), DATEADD(day, -15, GETDATE()), NULL),
 (3, 87, DATEADD(day, -48, GETDATE()), DATEADD(minute, 35, DATEADD(day, -48, GETDATE())), 3, DATEADD(day, -48, GETDATE()), DATEADD(day, -48, GETDATE()), NULL),
@@ -455,55 +350,25 @@ INSERT INTO dbo.web_sessions (session_id, customer_id, session_start, session_en
 (150, 22, DATEADD(day, -37, GETDATE()), DATEADD(minute, 8, DATEADD(day, -37, GETDATE())), 10, DATEADD(day, -37, GETDATE()), DATEADD(day, -37, GETDATE()), NULL);
 {%- endmacro %}
 
-
 {# ============================================================================
    SHOP SCHEMA AND SEED DATA
    ============================================================================ #}
 
 {%- macro _get_sqlserver_baseline_shop_schema() -%}
--- jaffle_shop database schema
+-- erp schema (shop/ERP tables)
 -- E-commerce/ERP system tables
--- Database: jaffle_shop | Schema: dbo
+-- Schema: erp
 
--- Ensure we're in the right database
-USE jaffle_shop;
-
--- Add database-level extended property (description)
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0 AND name = 'MS_Description')
+-- Create erp schema if it doesn't exist
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'erp')
 BEGIN
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Demo Source System Database for dbt Origin Simulator. This database contains synthetic e-commerce data including customer, product, order, and payment information. Tables follow the soft delete pattern with deleted_at timestamps. Use dbt-origin-simulator-ops to manage baseline and incremental data.';
-END
-
--- Add version tag
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0 AND name = 'origin_simulator_version')
-BEGIN
-    EXEC sp_addextendedproperty
-        @name = N'origin_simulator_version',
-        @value = N'1.0.0';
-END
-
--- Add purpose tag
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0 AND name = 'purpose')
-BEGIN
-    EXEC sp_addextendedproperty
-        @name = N'purpose',
-        @value = N'dbt Origin Simulator demo source system';
-END
-
--- Add managed_by tag
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0 AND name = 'managed_by')
-BEGIN
-    EXEC sp_addextendedproperty
-        @name = N'managed_by',
-        @value = N'dbt-origin-simulator-ops';
+    EXEC('CREATE SCHEMA erp')
 END
 
 -- Customers table
-IF OBJECT_ID('dbo.customers', 'U') IS NULL
+IF OBJECT_ID('erp.customers', 'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.customers (
+    CREATE TABLE erp.customers (
         customer_id INT NOT NULL PRIMARY KEY,
         first_name NVARCHAR(50),
         last_name NVARCHAR(50),
@@ -512,35 +377,12 @@ BEGIN
         updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         deleted_at DATETIME2
     );
-
-    -- Table description
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Customer master data table',
-        @level0type = N'SCHEMA', @level0name = N'dbo',
-        @level1type = N'TABLE', @level1name = N'customers';
-
-    -- Column descriptions
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Unique customer identifier',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'customers', @level2type = N'COLUMN', @level2name = N'customer_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Customer first name',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'customers', @level2type = N'COLUMN', @level2name = N'first_name';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Customer last name',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'customers', @level2type = N'COLUMN', @level2name = N'last_name';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Customer email address',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'customers', @level2type = N'COLUMN', @level2name = N'email';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record creation timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'customers', @level2type = N'COLUMN', @level2name = N'created_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record last update timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'customers', @level2type = N'COLUMN', @level2name = N'updated_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Soft delete timestamp (NULL = active, non-NULL = deleted)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'customers', @level2type = N'COLUMN', @level2name = N'deleted_at';
 END
 
 -- Products table
-IF OBJECT_ID('dbo.products', 'U') IS NULL
+IF OBJECT_ID('erp.products', 'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.products (
+    CREATE TABLE erp.products (
         product_id INT NOT NULL PRIMARY KEY,
         name NVARCHAR(100),
         category NVARCHAR(50),
@@ -549,35 +391,12 @@ BEGIN
         updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         deleted_at DATETIME2
     );
-
-    -- Table description
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Product catalog table',
-        @level0type = N'SCHEMA', @level0name = N'dbo',
-        @level1type = N'TABLE', @level1name = N'products';
-
-    -- Column descriptions
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Unique product identifier',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'products', @level2type = N'COLUMN', @level2name = N'product_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Product name',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'products', @level2type = N'COLUMN', @level2name = N'name';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Product category',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'products', @level2type = N'COLUMN', @level2name = N'category';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Product unit price',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'products', @level2type = N'COLUMN', @level2name = N'price';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record creation timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'products', @level2type = N'COLUMN', @level2name = N'created_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record last update timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'products', @level2type = N'COLUMN', @level2name = N'updated_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Soft delete timestamp (NULL = active, non-NULL = discontinued)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'products', @level2type = N'COLUMN', @level2name = N'deleted_at';
 END
 
 -- Orders table
-IF OBJECT_ID('dbo.orders', 'U') IS NULL
+IF OBJECT_ID('erp.orders', 'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.orders (
+    CREATE TABLE erp.orders (
         order_id INT NOT NULL PRIMARY KEY,
         customer_id INT,
         order_date DATE,
@@ -585,37 +404,14 @@ BEGIN
         created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         deleted_at DATETIME2,
-        CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES dbo.customers(customer_id)
+        CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES erp.customers(customer_id)
     );
-
-    -- Table description
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Customer orders table',
-        @level0type = N'SCHEMA', @level0name = N'dbo',
-        @level1type = N'TABLE', @level1name = N'orders';
-
-    -- Column descriptions
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Unique order identifier',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'orders', @level2type = N'COLUMN', @level2name = N'order_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Foreign key to customers table',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'orders', @level2type = N'COLUMN', @level2name = N'customer_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Order placement date',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'orders', @level2type = N'COLUMN', @level2name = N'order_date';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Order status (pending, shipped, delivered, etc.)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'orders', @level2type = N'COLUMN', @level2name = N'status';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record creation timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'orders', @level2type = N'COLUMN', @level2name = N'created_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record last update timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'orders', @level2type = N'COLUMN', @level2name = N'updated_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Soft delete timestamp (NULL = active, non-NULL = cancelled)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'orders', @level2type = N'COLUMN', @level2name = N'deleted_at';
 END
 
 -- Order items table
-IF OBJECT_ID('dbo.order_items', 'U') IS NULL
+IF OBJECT_ID('erp.order_items', 'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.order_items (
+    CREATE TABLE erp.order_items (
         order_item_id INT NOT NULL PRIMARY KEY,
         order_id INT,
         product_id INT,
@@ -624,40 +420,15 @@ BEGIN
         created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         deleted_at DATETIME2,
-        CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES dbo.orders(order_id),
-        CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES dbo.products(product_id)
+        CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES erp.orders(order_id),
+        CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES erp.products(product_id)
     );
-
-    -- Table description
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Order line items table',
-        @level0type = N'SCHEMA', @level0name = N'dbo',
-        @level1type = N'TABLE', @level1name = N'order_items';
-
-    -- Column descriptions
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Unique order line item identifier',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'order_items', @level2type = N'COLUMN', @level2name = N'order_item_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Foreign key to orders table',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'order_items', @level2type = N'COLUMN', @level2name = N'order_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Foreign key to products table',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'order_items', @level2type = N'COLUMN', @level2name = N'product_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Quantity ordered',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'order_items', @level2type = N'COLUMN', @level2name = N'quantity';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Price per unit at time of order',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'order_items', @level2type = N'COLUMN', @level2name = N'unit_price';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record creation timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'order_items', @level2type = N'COLUMN', @level2name = N'created_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record last update timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'order_items', @level2type = N'COLUMN', @level2name = N'updated_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Soft delete timestamp (rarely used)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'order_items', @level2type = N'COLUMN', @level2name = N'deleted_at';
 END
 
 -- Payments table
-IF OBJECT_ID('dbo.payments', 'U') IS NULL
+IF OBJECT_ID('erp.payments', 'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.payments (
+    CREATE TABLE erp.payments (
         payment_id INT NOT NULL PRIMARY KEY,
         order_id INT,
         payment_method NVARCHAR(20),
@@ -665,38 +436,13 @@ BEGIN
         created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         deleted_at DATETIME2,
-        CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES dbo.orders(order_id)
+        CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES erp.orders(order_id)
     );
-
-    -- Table description
-    EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'Payment transactions table',
-        @level0type = N'SCHEMA', @level0name = N'dbo',
-        @level1type = N'TABLE', @level1name = N'payments';
-
-    -- Column descriptions
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Unique payment identifier',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'payments', @level2type = N'COLUMN', @level2name = N'payment_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Foreign key to orders table',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'payments', @level2type = N'COLUMN', @level2name = N'order_id';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Payment method (credit_card, bank_transfer, etc.)',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'payments', @level2type = N'COLUMN', @level2name = N'payment_method';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Payment amount',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'payments', @level2type = N'COLUMN', @level2name = N'amount';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record creation timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'payments', @level2type = N'COLUMN', @level2name = N'created_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Record last update timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'payments', @level2type = N'COLUMN', @level2name = N'updated_at';
-    EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'Soft delete timestamp',
-        @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'payments', @level2type = N'COLUMN', @level2name = N'deleted_at';
 END
 {%- endmacro %}
 
 {%- macro _get_sqlserver_baseline_shop_customers() -%}
-USE jaffle_shop;
-
-INSERT INTO dbo.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
 (1, 'Brian', 'Alvarez', 'brian.alvarez1@example.com', DATEADD(day, -99, GETDATE()), DATEADD(day, -99, GETDATE()), NULL),
 (2, 'Kevin', 'Baker', 'kevin.baker2@example.com', DATEADD(day, -98, GETDATE()), DATEADD(day, -98, GETDATE()), NULL),
 (3, 'Karen', 'Martin', 'karen.martin3@example.com', DATEADD(day, -97, GETDATE()), DATEADD(day, -97, GETDATE()), NULL),
@@ -800,9 +546,7 @@ INSERT INTO dbo.customers (customer_id, first_name, last_name, email, created_at
 {%- endmacro %}
 
 {%- macro _get_sqlserver_baseline_shop_products() -%}
-USE jaffle_shop;
-
-INSERT INTO dbo.products (product_id, name, category, price, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.products (product_id, name, category, price, created_at, updated_at, deleted_at) VALUES
 (1, 'MacBook Pro 16"', 'Electronics', 1299.99, DATEADD(day, -100, GETDATE()), DATEADD(day, -100, GETDATE()), NULL),
 (2, 'Wireless Mouse', 'Electronics', 29.99, DATEADD(day, -100, GETDATE()), DATEADD(day, -100, GETDATE()), NULL),
 (3, 'USB-C Hub', 'Electronics', 89.99, DATEADD(day, -100, GETDATE()), DATEADD(day, -100, GETDATE()), NULL),
@@ -825,56 +569,47 @@ INSERT INTO dbo.products (product_id, name, category, price, created_at, updated
 (20, 'Laptop Stand', 'Accessories', 89.99, DATEADD(day, -100, GETDATE()), DATEADD(day, -100, GETDATE()), NULL);
 {%- endmacro %}
 
-
 {# ============================================================================
    UTILITIES
    ============================================================================ #}
 
 {%- macro _get_sqlserver_utilities_truncate_shop() -%}
-USE jaffle_shop;
-
 -- Truncate in reverse FK order
 -- First remove FK constraints, truncate, then re-add
-ALTER TABLE dbo.payments NOCHECK CONSTRAINT fk_payments_order;
-ALTER TABLE dbo.order_items NOCHECK CONSTRAINT fk_order_items_order;
-ALTER TABLE dbo.order_items NOCHECK CONSTRAINT fk_order_items_product;
-ALTER TABLE dbo.orders NOCHECK CONSTRAINT fk_orders_customer;
+ALTER TABLE erp.payments NOCHECK CONSTRAINT fk_payments_order;
+ALTER TABLE erp.order_items NOCHECK CONSTRAINT fk_order_items_order;
+ALTER TABLE erp.order_items NOCHECK CONSTRAINT fk_order_items_product;
+ALTER TABLE erp.orders NOCHECK CONSTRAINT fk_orders_customer;
 
-TRUNCATE TABLE dbo.payments;
-TRUNCATE TABLE dbo.order_items;
-TRUNCATE TABLE dbo.orders;
-TRUNCATE TABLE dbo.products;
-TRUNCATE TABLE dbo.customers;
+TRUNCATE TABLE erp.payments;
+TRUNCATE TABLE erp.order_items;
+TRUNCATE TABLE erp.orders;
+TRUNCATE TABLE erp.products;
+TRUNCATE TABLE erp.customers;
 
 -- Re-enable constraints
-ALTER TABLE dbo.payments CHECK CONSTRAINT fk_payments_order;
-ALTER TABLE dbo.order_items CHECK CONSTRAINT fk_order_items_order;
-ALTER TABLE dbo.order_items CHECK CONSTRAINT fk_order_items_product;
-ALTER TABLE dbo.orders CHECK CONSTRAINT fk_orders_customer;
+ALTER TABLE erp.payments CHECK CONSTRAINT fk_payments_order;
+ALTER TABLE erp.order_items CHECK CONSTRAINT fk_order_items_order;
+ALTER TABLE erp.order_items CHECK CONSTRAINT fk_order_items_product;
+ALTER TABLE erp.orders CHECK CONSTRAINT fk_orders_customer;
 {%- endmacro %}
 
 {%- macro _get_sqlserver_utilities_truncate_crm() -%}
-USE jaffle_crm;
-
 -- Truncate in reverse FK order
-ALTER TABLE dbo.email_activity NOCHECK CONSTRAINT fk_email_activity_campaign;
+ALTER TABLE crm.email_activity NOCHECK CONSTRAINT fk_email_activity_campaign;
 
-TRUNCATE TABLE dbo.web_sessions;
-TRUNCATE TABLE dbo.email_activity;
-TRUNCATE TABLE dbo.campaigns;
+TRUNCATE TABLE crm.web_sessions;
+TRUNCATE TABLE crm.email_activity;
+TRUNCATE TABLE crm.campaigns;
 
 -- Re-enable constraints
-ALTER TABLE dbo.email_activity CHECK CONSTRAINT fk_email_activity_campaign;
+ALTER TABLE crm.email_activity CHECK CONSTRAINT fk_email_activity_campaign;
 {%- endmacro %}
-
 
 {# ============================================================================
    GENERATED BASELINE AND DELTA MACROS
    Auto-generated from Databricks macros
    ============================================================================ #}
-
-
-
 
 {# ============================================================================
    GENERATED BASELINE AND DELTA MACROS
@@ -882,9 +617,7 @@ ALTER TABLE dbo.email_activity CHECK CONSTRAINT fk_email_activity_campaign;
    ============================================================================ #}
 
 {%- macro _get_sqlserver_baseline_shop_orders() -%}
-USE jaffle_shop;
-
-INSERT INTO dbo.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
 (1, 82, DATEADD(day, -15, CAST(GETDATE() AS DATE)), 'pending', DATEADD(day, -15, GETDATE()), DATEADD(day, -15, GETDATE()), NULL),
 (2, 36, DATEADD(day, -32, CAST(GETDATE() AS DATE)), 'completed', DATEADD(day, -32, GETDATE()), DATEADD(day, -29, GETDATE()), NULL),
 (3, 14, DATEADD(day, -87, CAST(GETDATE() AS DATE)), 'completed', DATEADD(day, -87, GETDATE()), DATEADD(day, -84, GETDATE()), NULL),
@@ -1388,9 +1121,7 @@ INSERT INTO dbo.orders (order_id, customer_id, order_date, status, created_at, u
 {%- endmacro %}
 
 {%- macro _get_sqlserver_baseline_shop_order_items() -%}
-USE jaffle_shop;
-
-INSERT INTO dbo.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
 (1, 1, 2, 1, 29.99, DATEADD(day, -56, GETDATE()), DATEADD(day, -56, GETDATE()), NULL),
 (2, 1, 12, 2, 79.99, DATEADD(day, -41, GETDATE()), DATEADD(day, -41, GETDATE()), NULL),
 (3, 2, 14, 1, 59.99, DATEADD(day, -66, GETDATE()), DATEADD(day, -66, GETDATE()), NULL),
@@ -2599,9 +2330,7 @@ INSERT INTO dbo.order_items (order_item_id, order_id, product_id, quantity, unit
 
 -- Add 25 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
 (101, 'Brian', 'Kapoor', 'brian.kapoor101@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (102, 'Phyllis', 'Smith', 'phyllis.smith102@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (103, 'Helene', 'Cordray', 'helene.cordray103@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -2635,9 +2364,7 @@ INSERT INTO dbo.customers (customer_id, first_name, last_name, email, created_at
 
 -- Add 25 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
 (501, 101, CURRENT_DATE, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (502, 102, CURRENT_DATE, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (503, 103, CURRENT_DATE, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -2706,7 +2433,7 @@ INSERT INTO dbo.orders (order_id, customer_id, order_date, status, created_at, u
 
 -- Add 25 new customers
 
-UPDATE dbo.orders
+UPDATE erp.orders
 SET status = 'completed',
     updated_at = CURRENT_TIMESTAMP
 WHERE order_id IN (192, 230, 219, 224, 185, 234, 202, 244, 177, 159, 243, 198, 169, 163, 212);
@@ -2718,9 +2445,7 @@ WHERE order_id IN (192, 230, 219, 224, 185, 234, 202, 244, 177, 159, 243, 198, 1
 
 -- Add 25 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
 (1201, 501, 5, 1, 199.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (1202, 502, 6, 2, 149.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (1203, 502, 8, 3, 49.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -2832,9 +2557,7 @@ INSERT INTO dbo.order_items (order_item_id, order_id, product_id, quantity, unit
 
 -- Add 25 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.payments (payment_id, order_id, payment_method, amount, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.payments (payment_id, order_id, payment_method, amount, created_at, updated_at, deleted_at) VALUES
 (221, 252, 'credit_card', 360.19, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (222, 252, 'credit_card', 974.54, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (223, 253, 'credit_card', 1457.35, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -2895,9 +2618,7 @@ INSERT INTO dbo.payments (payment_id, order_id, payment_method, amount, created_
 
 -- Add 40 email activity records
 
-USE jaffle_crm;
-
-INSERT INTO dbo.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
 (201, 113, 2, CURRENT_DATE, true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (202, 88, 3, CURRENT_DATE, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (203, 46, 3, CURRENT_DATE, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -2946,9 +2667,7 @@ INSERT INTO dbo.email_activity (activity_id, customer_id, campaign_id, sent_date
 
 -- Add 40 email activity records
 
-USE jaffle_crm;
-
-INSERT INTO dbo.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
 (151, 62, CURRENT_DATE, CURRENT_DATE, 17, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (152, 121, CURRENT_DATE, CURRENT_DATE, 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (153, 1, CURRENT_DATE, CURRENT_DATE, 12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -2987,9 +2706,7 @@ INSERT INTO dbo.web_sessions (session_id, customer_id, session_start, session_en
 
 -- Add 22 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
 (126, 'Cathy', 'Beesly', 'cathy.beesly126@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (127, 'Jim', 'Smith', 'jim.smith127@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (128, 'Meredith', 'Johnson', 'meredith.johnson128@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3020,9 +2737,7 @@ INSERT INTO dbo.customers (customer_id, first_name, last_name, email, created_at
 
 -- Add 22 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
 (561, 126, CURRENT_DATE, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (562, 127, CURRENT_DATE, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (563, 128, CURRENT_DATE, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3086,7 +2801,7 @@ INSERT INTO dbo.orders (order_id, customer_id, order_date, status, created_at, u
 
 -- Add 22 new customers
 
-UPDATE dbo.orders
+UPDATE erp.orders
 SET status = 'completed',
     updated_at = CURRENT_TIMESTAMP
 WHERE order_id IN (293, 220, 281, 298, 276, 264, 214, 307, 255, 238, 232, 218);
@@ -3098,9 +2813,7 @@ WHERE order_id IN (293, 220, 281, 298, 276, 264, 214, 307, 255, 238, 232, 218);
 
 -- Add 22 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
 (1304, 561, 3, 1, 79.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (1305, 562, 1, 2, 1099.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (1306, 562, 8, 1, 49.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3193,9 +2906,7 @@ INSERT INTO dbo.order_items (order_item_id, order_id, product_id, quantity, unit
 
 -- Add 22 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.payments (payment_id, order_id, payment_method, amount, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.payments (payment_id, order_id, payment_method, amount, created_at, updated_at, deleted_at) VALUES
 (273, 312, 'coupon', 954.29, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (274, 313, 'gift_card', 622.11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (275, 313, 'credit_card', 63.69, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3248,7 +2959,7 @@ INSERT INTO dbo.payments (payment_id, order_id, payment_method, amount, created_
 
 -- Add 22 new customers
 
-UPDATE dbo.products
+UPDATE erp.products
 SET price = 1099.99,
     updated_at = CURRENT_TIMESTAMP
 WHERE product_id = 1;  -- Laptop price increase
@@ -3260,9 +2971,7 @@ WHERE product_id = 1;  -- Laptop price increase
 
 -- Add 38 email activity records
 
-USE jaffle_crm;
-
-INSERT INTO dbo.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
 (241, 108, 1, CURRENT_DATE, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (242, 101, 1, CURRENT_DATE, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (243, 41, 1, CURRENT_DATE, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3309,9 +3018,7 @@ INSERT INTO dbo.email_activity (activity_id, customer_id, campaign_id, sent_date
 
 -- Add 38 email activity records
 
-USE jaffle_crm;
-
-INSERT INTO dbo.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
 (181, 111, CURRENT_DATE, CURRENT_DATE, 14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (182, 61, CURRENT_DATE, CURRENT_DATE, 28, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (183, 25, CURRENT_DATE, CURRENT_DATE, 7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3348,9 +3055,7 @@ INSERT INTO dbo.web_sessions (session_id, customer_id, session_start, session_en
 
 -- Add 28 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.customers (customer_id, first_name, last_name, email, created_at, updated_at, deleted_at) VALUES
 (148, 'Val', 'Halpert', 'val.halpert148@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (149, 'Ryan', 'Malone', 'ryan.malone149@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (150, 'Gabe', 'Johnson', 'gabe.johnson150@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3387,9 +3092,7 @@ INSERT INTO dbo.customers (customer_id, first_name, last_name, email, created_at
 
 -- Add 28 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.orders (order_id, customer_id, order_date, status, created_at, updated_at, deleted_at) VALUES
 (616, 148, CURRENT_DATE, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (617, 149, CURRENT_DATE, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (618, 150, CURRENT_DATE, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3463,7 +3166,7 @@ INSERT INTO dbo.orders (order_id, customer_id, order_date, status, created_at, u
 
 -- Add 28 new customers
 
-UPDATE dbo.orders
+UPDATE erp.orders
 SET status = 'cancelled',
     updated_at = CURRENT_TIMESTAMP
 WHERE order_id IN (310, 318, 293);
@@ -3475,9 +3178,7 @@ WHERE order_id IN (310, 318, 293);
 
 -- Add 28 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.order_items (order_item_id, order_id, product_id, quantity, unit_price, created_at, updated_at, deleted_at) VALUES
 (1388, 616, 1, 1, 1099.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (1389, 617, 1, 1, 1099.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (1390, 618, 8, 1, 49.99, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3601,9 +3302,7 @@ INSERT INTO dbo.order_items (order_item_id, order_id, product_id, quantity, unit
 
 -- Add 28 new customers
 
-USE jaffle_shop;
-
-INSERT INTO dbo.payments (payment_id, order_id, payment_method, amount, created_at, updated_at, deleted_at) VALUES
+INSERT INTO erp.payments (payment_id, order_id, payment_method, amount, created_at, updated_at, deleted_at) VALUES
 (317, 366, 'credit_card', 970.14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (318, 367, 'gift_card', 118.37, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (319, 369, 'gift_card', 1399.95, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3670,9 +3369,7 @@ INSERT INTO dbo.payments (payment_id, order_id, payment_method, amount, created_
 
 -- Add 45 email activity records
 
-USE jaffle_crm;
-
-INSERT INTO dbo.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.email_activity (activity_id, customer_id, campaign_id, sent_date, opened, clicked, created_at, updated_at, deleted_at) VALUES
 (279, 114, 2, CURRENT_DATE, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (280, 75, 3, CURRENT_DATE, true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (281, 134, 1, CURRENT_DATE, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
@@ -3726,9 +3423,7 @@ INSERT INTO dbo.email_activity (activity_id, customer_id, campaign_id, sent_date
 
 -- Add 45 email activity records
 
-USE jaffle_crm;
-
-INSERT INTO dbo.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
+INSERT INTO crm.web_sessions (session_id, customer_id, session_start, session_end, page_views, created_at, updated_at, deleted_at) VALUES
 (209, 138, CURRENT_DATE, CURRENT_DATE, 12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (210, 44, CURRENT_DATE, CURRENT_DATE, 13, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
 (211, 157, CURRENT_DATE, CURRENT_DATE, 6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
