@@ -9,6 +9,8 @@
 [![dbt-databricks](https://img.shields.io/badge/dbt--databricks-%3E%3D1.10.0-blue.svg)](https://github.com/databricks/dbt-databricks)
 [![dbt-sqlserver](https://img.shields.io/badge/dbt--sqlserver-%3E%3D1.10.0-blue.svg)](https://github.com/dbt-msft/dbt-sqlserver)
 
+> **Deterministic source data, on demand.**
+
 **Control plane for deterministic, incremental source system simulation** — four operations to manage upstream databases your ingestion pipelines pull from. Test Lakeflow Connect, Fivetran, CDC patterns, or custom ingestion against controlled source incremental changes.
 
 **[Quick Start](#quick-start)** • **[Wiki](https://github.com/feriksen-personal/dbt-source-simulator/wiki)** • **[Operations Guide](https://github.com/feriksen-personal/dbt-source-simulator/wiki/Operations-Guide)**
