@@ -1,0 +1,74 @@
+// jaffle_crm - Marketing/CRM Source System
+// Part of dbt-source-simulator
+// Database: jaffle_crm | Schema: crm
+
+Project jaffle_crm {
+  database_type: 'DuckDB/Databricks/Azure SQL'
+  Note: '''
+    Marketing/CRM source system for campaign tracking and customer engagement.
+    Simulates a marketing platform with campaigns, email activity, and web sessions.
+    Supports soft deletes and append-only event streams.
+  '''
+}
+
+Table campaigns {
+  campaign_id INTEGER [pk, not null, note: 'Unique campaign identifier']
+  campaign_name VARCHAR(100) [note: 'Name of the marketing campaign']
+  start_date DATE [note: 'Campaign start date']
+  end_date DATE [note: 'Campaign end date']
+  budget DECIMAL(10,2) [not null, note: 'Campaign budget']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record creation timestamp']
+  updated_at TIMESTAMP [default: `CURRENT_TIMESTAMP`, note: 'Record last update timestamp (NULL if never updated)']
+  deleted_at TIMESTAMP [note: 'Soft delete timestamp (NULL = active, non-NULL = archived)']
+
+  Note: '''
+    Marketing campaign master data with budgets and dates.
+    Delta patterns: budget updates, date changes, archival (soft delete).
+  '''
+}
+
+Table email_activity {
+  activity_id INTEGER [pk, not null, note: 'Unique email activity identifier']
+  customer_id INTEGER [note: 'Customer who received the email (references jaffle_shop.customers)']
+  campaign_id INTEGER [not null, ref: > campaigns.campaign_id, note: 'Foreign key to campaigns table']
+  sent_date TIMESTAMP [note: 'When email was sent']
+  opened BOOLEAN [note: 'Whether email was opened']
+  clicked BOOLEAN [note: 'Whether links in email were clicked']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record creation timestamp (when event was recorded)']
+  updated_at TIMESTAMP [default: `CURRENT_TIMESTAMP`, note: 'Record last update timestamp (typically append-only)']
+  deleted_at TIMESTAMP [note: 'Soft delete timestamp (rarely used, events are immutable)']
+
+  Note: '''
+    Email engagement event tracking (sent, opened, clicked).
+    Append-only transactional data.
+    Freshness: warn_after 31 days.
+  '''
+}
+
+Table web_sessions {
+  session_id INTEGER [pk, not null, note: 'Unique session identifier']
+  customer_id INTEGER [note: 'Customer who visited (references jaffle_shop.customers)']
+  session_start TIMESTAMP [note: 'When session started']
+  session_end TIMESTAMP [note: 'When session ended']
+  page_views INTEGER [note: 'Number of pages viewed in session']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record creation timestamp (when session was recorded)']
+  updated_at TIMESTAMP [default: `CURRENT_TIMESTAMP`, note: 'Record last update timestamp (could update if session extends)']
+  deleted_at TIMESTAMP [note: 'Soft delete timestamp (rarely used)']
+
+  Note: '''
+    Website session tracking with page views.
+    Append-only transactional data.
+    Freshness: warn_after 31 days.
+  '''
+}
+
+// Table Groups
+TableGroup marketing {
+  campaigns
+  email_activity
+  web_sessions
+}
+
+// Cross-database reference (informational - not enforced)
+// email_activity.customer_id references jaffle_shop.customers.customer_id
+// web_sessions.customer_id references jaffle_shop.customers.customer_id

@@ -1,0 +1,100 @@
+// jaffle_shop - E-commerce/ERP Source System
+// Part of dbt-source-simulator
+// Database: jaffle_shop | Schema: erp
+
+Project jaffle_shop {
+  database_type: 'DuckDB/Databricks/Azure SQL'
+  Note: '''
+    E-commerce/ERP source system inspired by dbt Labs' Jaffle Shop.
+    Simulates an operational database with customers, products, orders, and payments.
+    Supports soft deletes, status transitions, and incremental updates.
+  '''
+}
+
+Table customers {
+  customer_id INTEGER [pk, not null, note: 'Unique customer identifier']
+  first_name VARCHAR(50) [note: 'Customer first name']
+  last_name VARCHAR(50) [note: 'Customer last name']
+  email VARCHAR(100) [not null, note: 'Customer email address']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record creation timestamp']
+  updated_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record last update timestamp']
+  deleted_at TIMESTAMP [note: 'Soft delete timestamp (NULL = active, non-NULL = deleted)']
+
+  Note: '''
+    Customer master data with soft delete pattern.
+    Delta patterns: email updates, soft deletes.
+  '''
+}
+
+Table products {
+  product_id INTEGER [pk, not null, note: 'Unique product identifier']
+  name VARCHAR(100) [note: 'Product name']
+  category VARCHAR(50) [note: 'Product category']
+  price DECIMAL(10,2) [note: 'Product unit price']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record creation timestamp']
+  updated_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record last update timestamp']
+  deleted_at TIMESTAMP [note: 'Soft delete timestamp (NULL = active, non-NULL = discontinued)']
+
+  Note: '''
+    Product catalog with soft delete pattern.
+    Delta patterns: price changes, discontinuation (soft delete).
+  '''
+}
+
+Table orders {
+  order_id INTEGER [pk, not null, note: 'Unique order identifier']
+  customer_id INTEGER [not null, ref: > customers.customer_id, note: 'Foreign key to customers table']
+  order_date DATE [note: 'Order placement date']
+  status VARCHAR(20) [note: 'Order status: pending, processing, shipped, delivered, cancelled']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record creation timestamp']
+  updated_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record last update timestamp']
+  deleted_at TIMESTAMP [note: 'Soft delete timestamp (NULL = active, non-NULL = cancelled/deleted)']
+
+  Note: '''
+    Order headers with status tracking.
+    Delta patterns: status transitions, soft deletes.
+    Freshness: warn_after 31 days, error_after 35 days.
+  '''
+}
+
+Table order_items {
+  order_item_id INTEGER [pk, not null, note: 'Unique order item identifier']
+  order_id INTEGER [not null, ref: > orders.order_id, note: 'Foreign key to orders table']
+  product_id INTEGER [not null, ref: > products.product_id, note: 'Foreign key to products table']
+  quantity INTEGER [not null, note: 'Quantity of product ordered']
+  unit_price DECIMAL(10,2) [not null, note: 'Price per unit at time of order']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record creation timestamp']
+  updated_at TIMESTAMP [default: `CURRENT_TIMESTAMP`, note: 'Record last update timestamp (typically immutable)']
+  deleted_at TIMESTAMP [note: 'Soft delete timestamp (rarely used, line items typically immutable)']
+
+  Note: '''
+    Order line items with quantities and pricing.
+    Typically append-only/immutable after creation.
+    Freshness: warn_after 31 days.
+  '''
+}
+
+Table payments {
+  payment_id INTEGER [pk, not null, note: 'Unique payment identifier']
+  order_id INTEGER [not null, ref: > orders.order_id, note: 'Foreign key to orders table']
+  payment_method VARCHAR(20) [note: 'Payment method: credit_card, debit_card, bank_transfer, cash']
+  amount DECIMAL(10,2) [not null, note: 'Payment amount']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`, note: 'Record creation timestamp']
+  updated_at TIMESTAMP [default: `CURRENT_TIMESTAMP`, note: 'Record last update timestamp (typically append-only)']
+  deleted_at TIMESTAMP [note: 'Soft delete timestamp (rarely used)']
+
+  Note: '''
+    Payment records for orders.
+    Append-only transactional data.
+    Freshness: warn_after 31 days.
+  '''
+}
+
+// Table Groups
+TableGroup ecommerce {
+  customers
+  products
+  orders
+  order_items
+  payments
+}
