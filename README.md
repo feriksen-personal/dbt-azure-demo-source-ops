@@ -11,6 +11,8 @@
 
 > **Deterministic source data, on demand.**
 
+*Deterministic source evolution for testing CDC, SCD2, and incremental loads without the guesswork.*
+
 **Control plane for deterministic, incremental source system simulation** — four operations to manage upstream databases your ingestion pipelines pull from. Test Lakeflow Connect, Fivetran, CDC patterns, or custom ingestion against controlled source incremental changes.
 
 **[Quick Start](#quick-start)** • **[Wiki](https://github.com/feriksen-personal/dbt-source-simulator/wiki)** • **[Operations Guide](https://github.com/feriksen-personal/dbt-source-simulator/wiki/Operations-Guide)**
